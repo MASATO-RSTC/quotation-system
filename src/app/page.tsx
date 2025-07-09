@@ -187,6 +187,87 @@ export default function Home() {
     over60HoursRate,
   ]);
 
+  const monthlyCalculationFormula = useMemo(() => {
+    if (contractType === '月時（上限あり下限あり）' && monthlyCalculatedRates && (monthlyCalculatedRates.overtimeUnitPrice > 0 || monthlyCalculatedRates.deductionUnitPrice > 0)) {
+      let formulaText = `▼ 単価計算方法
+`;
+      const br = billingRate.toLocaleString(); // Formatted billing rate
+
+      // 超過計算式
+      if (overtimeUnitPriceCalculationMethod) {
+        let overtimeFormula = `超過：${br}円 ÷ `;
+        let divisorValue = 0;
+        let divisorLabel = '';
+
+        switch (overtimeUnitPriceCalculationMethod) {
+          case '上限割':
+            divisorValue = parseFloat(String(upperLimitHours)) || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+          case '下限割':
+            divisorValue = parseFloat(String(lowerLimitHours)) || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+          case '中央割':
+            divisorValue = (parseFloat(String(upperLimitHours)) + parseFloat(String(lowerLimitHours))) / 2 || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+          case '任意時間割':
+            divisorValue = parseFloat(String(customOvertimeUnitPriceHours)) || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+        }
+        overtimeFormula += `${divisorLabel}`;
+        if (overtimePremiumRate && parseFloat(String(overtimePremiumRate)) > 0) {
+          overtimeFormula += ` × ${overtimePremiumRate}`;
+        }
+        formulaText += overtimeFormula + "\n";
+      }
+
+      // 控除計算式
+      if (deductionUnitPriceCalculationMethod) {
+        let deductionFormula = `控除：${br}円 ÷ `;
+        let divisorValue = 0;
+        let divisorLabel = '';
+
+        switch (deductionUnitPriceCalculationMethod) {
+          case '上限割':
+            divisorValue = parseFloat(String(upperLimitHours)) || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+          case '下限割':
+            divisorValue = parseFloat(String(lowerLimitHours)) || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+          case '中央割':
+            divisorValue = (parseFloat(String(upperLimitHours)) + parseFloat(String(lowerLimitHours))) / 2 || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+          case '任意時間割':
+            divisorValue = parseFloat(String(customDeductionUnitPriceHours)) || 0;
+            divisorLabel = `${divisorValue}h`;
+            break;
+        }
+        deductionFormula += `${divisorLabel}`;
+        formulaText += deductionFormula + "\n";
+      }
+
+      return formulaText.trim();
+    }
+    return '';
+  }, [
+    contractType,
+    billingRate,
+    upperLimitHours,
+    lowerLimitHours,
+    overtimeUnitPriceCalculationMethod,
+    customOvertimeUnitPriceHours,
+    deductionUnitPriceCalculationMethod,
+    customDeductionUnitPriceHours,
+    overtimePremiumRate,
+    monthlyCalculatedRates,
+  ]);
+
   const handleGeneratePdf = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsGeneratingPdf(true);
@@ -195,6 +276,11 @@ export default function Home() {
         quotationNo, creationDate, validUntil, companyName, departmentName, personInCharge, staffName, contractStartDate, contractEndDate, workContent,
         billingRate: typeof billingRate === 'number' ? billingRate : 0,
         hourlyCalculatedRates,
+        // New fields for monthly contracts
+        upperLimitHours: typeof upperLimitHours === 'number' ? upperLimitHours : parseFloat(String(upperLimitHours)) || 0,
+        lowerLimitHours: typeof lowerLimitHours === 'number' ? lowerLimitHours : parseFloat(String(lowerLimitHours)) || 0,
+        monthlyCalculatedRates,
+        monthlyCalculationFormula,
         specialNotes,
         roundingUnit: roundingUnit.toString(),
         roundingMethod: roundingMethod as RoundingMethod,

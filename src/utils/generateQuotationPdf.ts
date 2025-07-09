@@ -29,6 +29,19 @@ interface QuotationData {
     nonLegalHoliday: number;
     over60Hours: number;
   } | null;
+  // New fields for monthly contracts
+  upperLimitHours?: number;
+  lowerLimitHours?: number;
+  monthlyCalculatedRates?: {
+    overtimeUnitPrice: number;
+    deductionUnitPrice: number;
+    overtimeUnitPriceWithPremium?: number;
+    monthlyMidnight?: number;
+    monthlyLegalHoliday?: number;
+    monthlyNonLegalHoliday?: number;
+    monthlyOver60Hours?: number;
+  } | null;
+  monthlyCalculationFormula?: string;
 }
 
 // Helper to fetch assets
@@ -125,7 +138,32 @@ export const generateQuotationPdf = async (data: QuotationData) => {
       ['業務内容', data.workContent],
     ];
 
-    if (data.contractType === "時給" && data.hourlyCalculatedRates) {
+    // Add 月時 specific fields
+    if (data.contractType.startsWith('月時')) {
+      tableBody.push(['ご請求単価', formatCurrency(data.billingRate)]); // Monthly billing rate
+      if (data.upperLimitHours && data.lowerLimitHours) {
+        tableBody.push(['時間幅', `${data.lowerLimitHours}h 〜 ${data.upperLimitHours}h`]);
+      }
+      if (data.monthlyCalculatedRates) {
+        tableBody.push(['超過単価', formatCurrency(data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined ? data.monthlyCalculatedRates.overtimeUnitPriceWithPremium : data.monthlyCalculatedRates.overtimeUnitPrice)]);
+        tableBody.push(['控除単価', formatCurrency(data.monthlyCalculatedRates.deductionUnitPrice)]);
+
+        if (data.monthlyCalculatedRates.monthlyMidnight) {
+          tableBody.push(['深夜手当', formatCurrency(data.monthlyCalculatedRates.monthlyMidnight)]);
+        }
+        if (data.monthlyCalculatedRates.monthlyLegalHoliday) {
+          tableBody.push(['法定休日出勤', formatCurrency(data.monthlyCalculatedRates.monthlyLegalHoliday)]);
+        }
+        if (data.monthlyCalculatedRates.monthlyNonLegalHoliday) {
+          tableBody.push(['法定外休日出勤', formatCurrency(data.monthlyCalculatedRates.monthlyNonLegalHoliday)]);
+        }
+        if (data.monthlyCalculatedRates.monthlyOver60Hours) {
+          tableBody.push(['60時間超過', formatCurrency(data.monthlyCalculatedRates.monthlyOver60Hours)]);
+        }
+      }
+    }
+    // Add 時給 specific fields
+    else if (data.contractType === "時給" && data.hourlyCalculatedRates) {
       tableBody.push(['ご請求単価', `${formatCurrency(data.billingRate)} / 時`]);
       tableBody.push(['普通残業', formatCurrency(data.hourlyCalculatedRates.normalOvertime)]);
       tableBody.push(['深夜手当（0.25）', formatCurrency(data.hourlyCalculatedRates.midnight)]);
@@ -164,7 +202,14 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     notesTop += 5;
 
     const settlementText = `精算時間は${data.settlementUnit}分${data.settlementMethod}。精算金額は${data.roundingUnit}円${data.roundingMethod}。`;
-    const combinedNotes = `${settlementText}\n${data.specialNotes}`.trim();
+    let combinedNotes = `${settlementText}`;
+    if (data.monthlyCalculationFormula) {
+      combinedNotes += `\n\n計算式: ${data.monthlyCalculationFormula}`;
+    }
+    if (data.specialNotes) {
+      combinedNotes += `\n${data.specialNotes}`;
+    }
+    combinedNotes = combinedNotes.trim();
     
     doc.setFontSize(10);
     const boxPadding = 4;
