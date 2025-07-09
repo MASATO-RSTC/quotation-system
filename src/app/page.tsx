@@ -138,7 +138,7 @@ export default function Home() {
   }, [billingRate, overtimeRate, midnightRate, legalHolidayRate, nonLegalHolidayRate, over60HoursRate, roundingUnit, roundingMethod]);
 
   const monthlyCalculatedRates = useMemo(() => {
-    if (contractType.startsWith('月時')) {
+    if (contractType.startsWith('月時') && contractType !== '月時（完全固定）') {
       const br = typeof billingRate === 'number' ? billingRate : parseFloat(billingRate) || 0;
       const ulh = typeof upperLimitHours === 'number' ? upperLimitHours : parseFloat(upperLimitHours) || 0;
       const llh = typeof lowerLimitHours === 'number' ? lowerLimitHours : parseFloat(lowerLimitHours) || 0;
@@ -461,8 +461,12 @@ export default function Home() {
           <div className="p-4 border rounded-lg bg-gray-50">
              <h2 className="text-xl font-semibold mb-4">丸め・精算設定</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label htmlFor="roundingUnit" className="block text-sm font-medium text-gray-700">金額丸め単位 <span className="text-red-500">*</span></label><select id="roundingUnit" value={roundingUnit} onChange={e => setRoundingUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingUnitOptions.map(o => <option key={o} value={o}>{o}円</option>)}</select></div>
-                <div><label htmlFor="roundingMethod" className="block text-sm font-medium text-gray-700">丸め方法 <span className="text-red-500">*</span></label><select id="roundingMethod" value={roundingMethod} onChange={e => setRoundingMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                {contractType !== '月時（完全固定）' && (
+                  <>
+                    <div><label htmlFor="roundingUnit" className="block text-sm font-medium text-gray-700">金額丸め単位 <span className="text-red-500">*</span></label><select id="roundingUnit" value={roundingUnit} onChange={e => setRoundingUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingUnitOptions.map(o => <option key={o} value={o}>{o}円</option>)}</select></div>
+                    <div><label htmlFor="roundingMethod" className="block text-sm font-medium text-gray-700">丸め方法 <span className="text-red-500">*</span></label><select id="roundingMethod" value={roundingMethod} onChange={e => setRoundingMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                  </>
+                )}
                 <div><label htmlFor="settlementUnit" className="block text-sm font-medium text-gray-700">時間精算単位 <span className="text-red-500">*</span></label><select id="settlementUnit" value={settlementUnit} onChange={e => setSettlementUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{settlementUnitOptions.map(o => <option key={o} value={o}>{o}分</option>)}</select></div>
                 <div><label htmlFor="settlementMethod" className="block text-sm font-medium text-gray-700">精算丸め <span className="text-red-500">*</span></label><select id="settlementMethod" value={settlementMethod} onChange={e => setSettlementMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
              </div>

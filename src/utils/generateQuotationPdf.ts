@@ -149,6 +149,8 @@ export const generateQuotationPdf = async (data: QuotationData) => {
         tableBody.push(['時間幅', `下限なし〜${data.upperLimitHours || 0}h`]);
       } else if (data.contractType === '月時（上限なし下限あり）') {
         tableBody.push(['時間幅', `${data.lowerLimitHours || 0}h〜上限なし`]);
+      } else if (data.contractType === '月時（完全固定）') {
+        tableBody.push(['時間幅', '完全固定']);
       }
 
       if (data.monthlyCalculatedRates) {
@@ -221,7 +223,12 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     doc.text('【特記事項】', margin, notesTop);
     notesTop += 5;
 
-    const settlementText = `精算時間は${data.settlementUnit}分${data.settlementMethod}。精算金額は${data.roundingUnit}円${data.roundingMethod}。`;
+    const settlementTimeText = `精算時間は${data.settlementUnit}分${data.settlementMethod}。`;
+    let settlementText = settlementTimeText;
+    if (data.contractType !== '月時（完全固定）') {
+      settlementText += `精算金額は${data.roundingUnit}円${data.roundingMethod}。`;
+    }
+
     let combinedNotes = `${settlementText}`;
     if (data.monthlyCalculationFormula) {
       combinedNotes += `\n\n${data.monthlyCalculationFormula}`;
