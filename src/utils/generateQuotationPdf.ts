@@ -140,13 +140,24 @@ export const generateQuotationPdf = async (data: QuotationData) => {
 
     // Add 月時 specific fields
     if (data.contractType.startsWith('月時')) {
-      tableBody.push(['ご請求単価', formatCurrency(data.billingRate)]); // Monthly billing rate
-      if (data.upperLimitHours && data.lowerLimitHours) {
-        tableBody.push(['時間幅', `${data.lowerLimitHours}h 〜 ${data.upperLimitHours}h`]);
+      tableBody.push(['月給単価', formatCurrency(data.billingRate)]);
+      
+      if (data.contractType === '月時（上限あり下限あり）') {
+        tableBody.push(['時間幅', `${data.lowerLimitHours || 0}h 〜 ${data.upperLimitHours || 0}h`]);
+      } else if (data.contractType === '月時（上限あり下限なし）') {
+        tableBody.push(['時間幅', `下限なし〜${data.upperLimitHours || 0}h`]);
       }
+
       if (data.monthlyCalculatedRates) {
-        tableBody.push(['超過単価', formatCurrency(data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined ? data.monthlyCalculatedRates.overtimeUnitPriceWithPremium : data.monthlyCalculatedRates.overtimeUnitPrice)]);
-        tableBody.push(['控除単価', formatCurrency(data.monthlyCalculatedRates.deductionUnitPrice)]);
+        let overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPrice;
+        if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
+            overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPriceWithPremium;
+        }
+        tableBody.push(['超過単価', formatCurrency(overtimeDisplayValue)]);
+        
+        if (data.contractType === '月時（上限あり下限あり）' && data.monthlyCalculatedRates.deductionUnitPrice > 0) {
+            tableBody.push(['控除単価', formatCurrency(data.monthlyCalculatedRates.deductionUnitPrice)]);
+        }
 
         if (data.monthlyCalculatedRates.monthlyMidnight) {
           tableBody.push(['深夜手当', formatCurrency(data.monthlyCalculatedRates.monthlyMidnight)]);

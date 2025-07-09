@@ -73,16 +73,16 @@ export const calculateMonthlyRates = (
   // Calculate overtimeUnitPrice
   switch (overtimeUnitPriceCalculationMethod) {
     case '上限割':
-      overtimeUnitPrice = billingRate / upperLimitHours;
+      if (upperLimitHours > 0) overtimeUnitPrice = billingRate / upperLimitHours;
       break;
     case '下限割':
-      overtimeUnitPrice = billingRate / lowerLimitHours;
+      if (lowerLimitHours > 0) overtimeUnitPrice = billingRate / lowerLimitHours;
       break;
     case '中央割':
-      overtimeUnitPrice = billingRate / ((upperLimitHours + lowerLimitHours) / 2);
+      if (upperLimitHours > 0 && lowerLimitHours > 0) overtimeUnitPrice = billingRate / ((upperLimitHours + lowerLimitHours) / 2);
       break;
     case '任意時間割':
-      overtimeUnitPrice = billingRate / customOvertimeUnitPriceHours;
+      if (customOvertimeUnitPriceHours > 0) overtimeUnitPrice = billingRate / customOvertimeUnitPriceHours;
       break;
     default:
       break;
@@ -96,26 +96,27 @@ export const calculateMonthlyRates = (
     overtimeUnitPriceWithPremium = roundValue(overtimeUnitPrice * overtimePremiumRate, roundingUnit, roundingMethod);
   }
 
-  // Calculate deductionUnitPrice
-  switch (deductionUnitPriceCalculationMethod) {
-    case '上限割':
-      deductionUnitPrice = billingRate / upperLimitHours;
-      break;
-    case '下限割':
-      deductionUnitPrice = billingRate / lowerLimitHours;
-      break;
-    case '中央割':
-      deductionUnitPrice = billingRate / ((upperLimitHours + lowerLimitHours) / 2);
-      break;
-    case '任意時間割':
-      deductionUnitPrice = billingRate / customDeductionUnitPriceHours;
-      break;
-    default:
-      break;
+  // Calculate deductionUnitPrice only if there is a lower limit
+  if (lowerLimitHours > 0 && deductionUnitPriceCalculationMethod) {
+    switch (deductionUnitPriceCalculationMethod) {
+      case '上限割':
+        if (upperLimitHours > 0) deductionUnitPrice = billingRate / upperLimitHours;
+        break;
+      case '下限割':
+        if (lowerLimitHours > 0) deductionUnitPrice = billingRate / lowerLimitHours;
+        break;
+      case '中央割':
+        if (upperLimitHours > 0 && lowerLimitHours > 0) deductionUnitPrice = billingRate / ((upperLimitHours + lowerLimitHours) / 2);
+        break;
+      case '任意時間割':
+        if (customDeductionUnitPriceHours > 0) deductionUnitPrice = billingRate / customDeductionUnitPriceHours;
+        break;
+      default:
+        break;
+    }
+    // Apply rounding to deductionUnitPrice
+    deductionUnitPrice = roundValue(deductionUnitPrice, roundingUnit, roundingMethod);
   }
-
-  // Apply rounding to deductionUnitPrice
-  deductionUnitPrice = roundValue(deductionUnitPrice, roundingUnit, roundingMethod);
 
   // Calculate monthly premium rates based on overtimeUnitPrice (or overtimeUnitPriceWithPremium)
   const baseForPremium = overtimeUnitPriceWithPremium !== undefined ? overtimeUnitPriceWithPremium : overtimeUnitPrice;

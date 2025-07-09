@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { calculateHourlyRates, calculateMonthlyRates, RoundingMethod } from "../utils/calculations";
+import { calculateHourlyRates, calculateMonthlyRates } from "../utils/calculations";
 import { generateQuotationPdf } from "../utils/generateQuotationPdf";
-import { ContractType, MonthlyCalculatedRates } from "../types/quotation";
+import { ContractType, MonthlyCalculatedRates, RoundingMethod } from "../types/quotation";
 
 export default function Home() {
   const [quotationNo, setQuotationNo] = useState("");
@@ -148,7 +148,7 @@ export default function Home() {
       const ru = typeof roundingUnit === 'number' ? roundingUnit : parseInt(String(roundingUnit)) || 0;
       const rm = typeof roundingMethod === 'string' && roundingMethod ? roundingMethod as RoundingMethod : "切り捨て";
 
-      if (br > 0 && ulh > 0 && llh > 0 && ru > 0 && rm) { // Basic validation for calculation
+      if (br > 0 && ulh > 0 && ru > 0 && rm && (contractType !== '月時（上限あり下限あり）' || llh > 0)) { // Basic validation for calculation
         return calculateMonthlyRates(
           br,
           ulh,
@@ -188,9 +188,8 @@ export default function Home() {
   ]);
 
   const monthlyCalculationFormula = useMemo(() => {
-    if (contractType === '月時（上限あり下限あり）' && monthlyCalculatedRates && (monthlyCalculatedRates.overtimeUnitPrice > 0 || monthlyCalculatedRates.deductionUnitPrice > 0)) {
-      let formulaText = `▼ 単価計算方法
-`;
+    if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）') && monthlyCalculatedRates && (monthlyCalculatedRates.overtimeUnitPrice > 0 || monthlyCalculatedRates.deductionUnitPrice > 0)) {
+      let formulaText = `▼ 単価計算方法\n`;
       const br = billingRate.toLocaleString(); // Formatted billing rate
 
       // 超過計算式
@@ -225,7 +224,7 @@ export default function Home() {
       }
 
       // 控除計算式
-      if (deductionUnitPriceCalculationMethod) {
+      if (contractType === '月時（上限あり下限あり）' && deductionUnitPriceCalculationMethod) {
         let deductionFormula = `控除：${br}円 ÷ `;
         let divisorValue = 0;
         let divisorLabel = '';
@@ -336,7 +335,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="text-red-500">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">
-                {contractType === '時給' ? 'ご請求単価 (/時)' : contractType === '月時（上限あり下限あり）' ? '月給単価' : '単価'} <span className="text-red-500">*</span>
+                {contractType === '時給' ? 'ご請求単価 (/時)' : contractType.startsWith('月時') ? '月給単価' : '単価'} <span className="text-red-500">*</span>
               </label><input type="number" id="billingRate" value={billingRate} onChange={e => setBillingRate(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div className="md:col-span-2"><label htmlFor="workContent" className="block text-sm font-medium text-gray-700">業務内容 <span className="text-red-500">*</span></label><textarea id="workContent" value={workContent} onChange={e => setWorkContent(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={3} required /></div>
               {/* New Contract Type Selection */}
@@ -359,18 +358,21 @@ export default function Home() {
                 <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="text-red-500">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
                 <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="text-red-500">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               </div>
-              {contractType === '月時（上限あり下限あり）' && (
+              {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）') && (
                 <>
                   {/* 1. 上限時間（h） */}
                   <div>
                     <label htmlFor="upperLimitHours" className="block text-sm font-medium text-gray-700">上限時間 (h) <span className="text-red-500">*</span></label>
                     <input type="number" id="upperLimitHours" value={upperLimitHours} onChange={e => setUpperLimitHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                   </div>
+
                   {/* 2. 下限時間（h） */}
-                  <div>
-                    <label htmlFor="lowerLimitHours" className="block text-sm font-medium text-gray-700">下限時間 (h) <span className="text-red-500">*</span></label>
-                    <input type="number" id="lowerLimitHours" value={lowerLimitHours} onChange={e => setLowerLimitHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
-                  </div>
+                  {contractType === '月時（上限あり下限あり）' && (
+                    <div>
+                      <label htmlFor="lowerLimitHours" className="block text-sm font-medium text-gray-700">下限時間 (h) <span className="text-red-500">*</span></label>
+                      <input type="number" id="lowerLimitHours" value={lowerLimitHours} onChange={e => setLowerLimitHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
+                    </div>
+                  )}
 
                   {/* 4. 超過単価の算出基準（選択式） */}
                   <div className="md:col-span-2">
@@ -378,8 +380,8 @@ export default function Home() {
                     <select id="overtimeUnitPriceCalculationMethod" value={overtimeUnitPriceCalculationMethod} onChange={e => setOvertimeUnitPriceCalculationMethod(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                       <option value="">選択してください</option>
                       <option value="上限割">上限割</option>
-                      <option value="下限割">下限割</option>
-                      <option value="中央割">中央割</option>
+                      {contractType === '月時（上限あり下限あり）' && <option value="下限割">下限割</option>}
+                      {contractType === '月時（上限あり下限あり）' && <option value="中央割">中央割</option>}
                       <option value="任意時間割">任意時間割</option>
                     </select>
                   </div>
@@ -392,22 +394,26 @@ export default function Home() {
                   )}
 
                   {/* 5. 控除単価の算出基準（選択式） */}
-                  <div className="md:col-span-2">
-                    <label htmlFor="deductionUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">控除単価の算出基準 <span className="text-red-500">*</span></label>
-                    <select id="deductionUnitPriceCalculationMethod" value={deductionUnitPriceCalculationMethod} onChange={e => setDeductionUnitPriceCalculationMethod(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                      <option value="">選択してください</option>
-                      <option value="上限割">上限割</option>
-                      <option value="下限割">下限割</option>
-                      <option value="中央割">中央割</option>
-                      <option value="任意時間割">任意時間割</option>
-                    </select>
-                  </div>
-                  {/* 任意時間（数値）入力フィールド */}
-                  {deductionUnitPriceCalculationMethod === '任意時間割' && (
-                    <div className="md:col-span-2">
-                      <label htmlFor="customDeductionUnitPriceHours" className="block text-sm font-medium text-gray-700">任意時間 (h) <span className="text-red-500">*</span></label>
-                      <input type="number" id="customDeductionUnitPriceHours" value={customDeductionUnitPriceHours} onChange={e => setCustomDeductionUnitPriceHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
-                    </div>
+                  {contractType === '月時（上限あり下限あり）' && (
+                    <>
+                      <div className="md:col-span-2">
+                        <label htmlFor="deductionUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">控除単価の算出基準 <span className="text-red-500">*</span></label>
+                        <select id="deductionUnitPriceCalculationMethod" value={deductionUnitPriceCalculationMethod} onChange={e => setDeductionUnitPriceCalculationMethod(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                          <option value="">選択してください</option>
+                          <option value="上限割">上限割</option>
+                          <option value="下限割">下限割</option>
+                          <option value="中央割">中央割</option>
+                          <option value="任意時間割">任意時間割</option>
+                        </select>
+                      </div>
+                      {/* 任意時間（数値）入力フィールド */}
+                      {deductionUnitPriceCalculationMethod === '任意時間割' && (
+                        <div className="md:col-span-2">
+                          <label htmlFor="customDeductionUnitPriceHours" className="block text-sm font-medium text-gray-700">任意時間 (h) <span className="text-red-500">*</span></label>
+                          <input type="number" id="customDeductionUnitPriceHours" value={customDeductionUnitPriceHours} onChange={e => setCustomDeductionUnitPriceHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* 6. 割増係数（任意・超過単価のみ） */}
@@ -463,7 +469,9 @@ export default function Home() {
                 {contractType.startsWith('月時') && monthlyCalculatedRates && (
                   <>
                     <div><p className="font-medium text-gray-600">超過単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.overtimeUnitPriceWithPremium ? `${monthlyCalculatedRates.overtimeUnitPriceWithPremium.toLocaleString()}円 (${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円)` : monthlyCalculatedRates.overtimeUnitPrice > 0 ? `${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円` : '-'}</p></div>
-                    <div><p className="font-medium text-gray-600">控除単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.deductionUnitPrice > 0 ? `${monthlyCalculatedRates.deductionUnitPrice.toLocaleString()}円` : '-'}</p></div>
+                    {contractType === '月時（上限あり下限あり）' &&
+                      <div><p className="font-medium text-gray-600">控除単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.deductionUnitPrice > 0 ? `${monthlyCalculatedRates.deductionUnitPrice.toLocaleString()}円` : '-'}</p></div>
+                    }
                     {monthlyCalculatedRates.monthlyMidnight && (
                       <div><p className="font-medium text-gray-600">深夜手当単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.monthlyMidnight > 0 ? `${monthlyCalculatedRates.monthlyMidnight.toLocaleString()}円` : '-'}</p></div>
                     )}
