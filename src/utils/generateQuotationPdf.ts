@@ -204,10 +204,10 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     const settlementText = `精算時間は${data.settlementUnit}分${data.settlementMethod}。精算金額は${data.roundingUnit}円${data.roundingMethod}。`;
     let combinedNotes = `${settlementText}`;
     if (data.monthlyCalculationFormula) {
-      combinedNotes += `\n\n計算式: ${data.monthlyCalculationFormula}`;
+      combinedNotes += `\n\n${data.monthlyCalculationFormula}`;
     }
     if (data.specialNotes) {
-      combinedNotes += `\n${data.specialNotes}`;
+      combinedNotes += `\n\n${data.specialNotes}`;
     }
     combinedNotes = combinedNotes.trim();
     
