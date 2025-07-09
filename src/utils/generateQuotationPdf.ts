@@ -142,20 +142,29 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     if (data.contractType.startsWith('月時')) {
       tableBody.push(['月給単価', formatCurrency(data.billingRate)]);
       
+      // 時間幅
       if (data.contractType === '月時（上限あり下限あり）') {
         tableBody.push(['時間幅', `${data.lowerLimitHours || 0}h 〜 ${data.upperLimitHours || 0}h`]);
       } else if (data.contractType === '月時（上限あり下限なし）') {
         tableBody.push(['時間幅', `下限なし〜${data.upperLimitHours || 0}h`]);
+      } else if (data.contractType === '月時（上限なし下限あり）') {
+        tableBody.push(['時間幅', `${data.lowerLimitHours || 0}h〜上限なし`]);
       }
 
       if (data.monthlyCalculatedRates) {
-        let overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPrice;
-        if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
-            overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPriceWithPremium;
+        // 超過単価
+        const hasOvertime = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限あり下限なし）';
+        if (hasOvertime && data.monthlyCalculatedRates.overtimeUnitPrice > 0) {
+            let overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPrice;
+            if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
+                overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPriceWithPremium;
+            }
+            tableBody.push(['超過単価', formatCurrency(overtimeDisplayValue)]);
         }
-        tableBody.push(['超過単価', formatCurrency(overtimeDisplayValue)]);
         
-        if (data.contractType === '月時（上限あり下限あり）' && data.monthlyCalculatedRates.deductionUnitPrice > 0) {
+        // 控除単価
+        const hasDeduction = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限なし下限あり）';
+        if (hasDeduction && data.monthlyCalculatedRates.deductionUnitPrice > 0) {
             tableBody.push(['控除単価', formatCurrency(data.monthlyCalculatedRates.deductionUnitPrice)]);
         }
 
