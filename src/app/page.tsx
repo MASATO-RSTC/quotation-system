@@ -1,103 +1,220 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useMemo, useEffect } from "react";
+import { calculateHourlyRates, RoundingMethod } from "../utils/calculations";
+import { generateQuotationPdf } from "../utils/generateQuotationPdf";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [quotationNo, setQuotationNo] = useState("");
+  const [creationDate, setCreationDate] = useState("");
+  const [validUntil, setValidUntil] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [departmentName, setDepartmentName] = useState("");
+  const [personInCharge, setPersonInCharge] = useState("");
+  const [staffName, setStaffName] = useState("");
+  const [workContent, setWorkContent] = useState("");
+  const [billingRate, setBillingRate] = useState<number | string>(5000);
+  const [contractStartDate, setContractStartDate] = useState("");
+  const [contractEndDate, setContractEndDate] = useState("");
+  const [specialNotes, setSpecialNotes] = useState("");
+  const [contactInfo, setContactInfo] = useState(
+    `株式会社リツアンSTC　エンジニアリング事業部\n担当者名：鈴木 祥\nメール：s.suzuki@ritsuan.com`
+  );
+  const [overtimeRate, setOvertimeRate] = useState<number | string>(1.25);
+  const [midnightRate, setMidnightRate] = useState<number | string>(0.25);
+  const [legalHolidayRate, setLegalHolidayRate] = useState<number | string>(1.35);
+  const [nonLegalHolidayRate, setNonLegalHolidayRate] = useState<number | string>(1.25);
+  const [over60HoursRate, setOver60HoursRate] = useState<number | string>(1.50);
+  const [roundingUnit, setRoundingUnit] = useState<number | string>("");
+  const [roundingMethod, setRoundingMethod] = useState<RoundingMethod | string>("");
+  const [settlementUnit, setSettlementUnit] = useState<number | string>("");
+  const [settlementMethod, setSettlementMethod] = useState<RoundingMethod | string>("");
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const roundingUnitOptions = [1, 10, 100, 1000];
+  const roundingMethods: RoundingMethod[] = ["切り捨て", "切り上げ", "四捨五入"];
+  const settlementUnitOptions = [1, 3, 5, 10, 15, 30, 45, 60];
+
+  useEffect(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    setCreationDate(todayStr);
+
+    setQuotationNo(`RSTC-ES-${yyyy}${mm}-${String(Date.now()).slice(-3)}`);
+
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const nextMonthStr = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-${String(nextMonth.getDate()).padStart(2, '0')}`;
+    setValidUntil(nextMonthStr);
+
+    const firstDayOfMonth = `${yyyy}-${mm}-01`;
+    setContractStartDate(firstDayOfMonth);
+
+    const threeMonthsLater = new Date(today);
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    const endOfMonth = new Date(threeMonthsLater.getFullYear(), threeMonthsLater.getMonth() + 1, 0);
+    const contractEndDateStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
+    setContractEndDate(contractEndDateStr);
+
+  }, []);
+
+  const hourlyCalculatedRates = useMemo(() => {
+    const rate = typeof billingRate === 'number' ? billingRate : parseFloat(billingRate) || 0;
+    const ru = typeof roundingUnit === 'number' ? roundingUnit : parseInt(String(roundingUnit)) || 0;
+    const rm = typeof roundingMethod === 'string' && roundingMethod ? roundingMethod as RoundingMethod : "切り捨て";
+
+    if (rate > 0 && ru > 0 && rm) {
+      return calculateHourlyRates(
+        rate,
+        parseFloat(String(overtimeRate)) || 0,
+        parseFloat(String(midnightRate)) || 0,
+        parseFloat(String(legalHolidayRate)) || 0,
+        parseFloat(String(nonLegalHolidayRate)) || 0,
+        parseFloat(String(over60HoursRate)) || 0,
+        ru,
+        rm
+      );
+    }
+    return null;
+  }, [billingRate, overtimeRate, midnightRate, legalHolidayRate, nonLegalHolidayRate, over60HoursRate, roundingUnit, roundingMethod]);
+
+  const handleGeneratePdf = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsGeneratingPdf(true);
+    try {
+      await generateQuotationPdf({
+        quotationNo, creationDate, validUntil, companyName, departmentName, personInCharge, staffName, contractStartDate, contractEndDate, workContent,
+        billingRate: typeof billingRate === 'number' ? billingRate : 0,
+        hourlyCalculatedRates,
+        specialNotes,
+        roundingUnit: roundingUnit.toString(),
+        roundingMethod: roundingMethod as RoundingMethod,
+        settlementUnit: settlementUnit.toString(),
+        settlementMethod: settlementMethod as RoundingMethod,
+        contactInfo,
+        contractType: '時給',
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handlePremiumRateChange = (setter: React.Dispatch<React.SetStateAction<string | number>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setter(e.target.value);
+  };
+
+  const handlePremiumRateBlur = (setter: React.Dispatch<React.SetStateAction<string | number>>) => (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value === '') {
+      setter(0);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-6 text-center">御見積書</h1>
+        <form onSubmit={handleGeneratePdf} className="space-y-6">
+          
+          {/* Basic Info Section */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h2 className="text-xl font-semibold mb-4">基本情報</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div><label htmlFor="quotationNo" className="block text-sm font-medium text-gray-700">見積書No. <span className="text-red-500">*</span></label><input type="text" id="quotationNo" value={quotationNo} onChange={e => setQuotationNo(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" readOnly required /></div>
+              <div><label htmlFor="creationDate" className="block text-sm font-medium text-gray-700">作成日 <span className="text-red-500">*</span></label><input type="date" id="creationDate" value={creationDate} onChange={e => setCreationDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="validUntil" className="block text-sm font-medium text-gray-700">有効期限 <span className="text-red-500">*</span></label><input type="date" id="validUntil" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+            </div>
+          </div>
+
+          {/* Client Info Section */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h2 className="text-xl font-semibold mb-4">顧客情報</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div><label htmlFor="companyName" className="block text-sm font-medium text-gray-700">企業名 <span className="text-red-500">*</span></label><input type="text" id="companyName" value={companyName} onChange={e => setCompanyName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">部署名</label><input type="text" id="departmentName" value={departmentName} onChange={e => setDepartmentName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+              <div className="md:col-span-2"><label htmlFor="personInCharge" className="block text-sm font-medium text-gray-700">担当者氏名</label><input type="text" id="personInCharge" value={personInCharge} onChange={e => setPersonInCharge(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+            </div>
+          </div>
+
+          {/* Staff & Contract Details Section */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h2 className="text-xl font-semibold mb-4">スタッフ・契約情報</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="text-red-500">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">ご請求単価 (/時) <span className="text-red-500">*</span></label><input type="number" id="billingRate" value={billingRate} onChange={e => setBillingRate(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div className="md:col-span-2"><label htmlFor="workContent" className="block text-sm font-medium text-gray-700">業務内容 <span className="text-red-500">*</span></label><textarea id="workContent" value={workContent} onChange={e => setWorkContent(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={3} required /></div>
+              <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="text-red-500">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+                <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="text-red-500">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Premium Rates Section */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h2 className="text-xl font-semibold mb-4">割増率設定</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div><label htmlFor="overtimeRate" className="block text-sm font-medium text-gray-700">普通残業 (x1.25)</label><input type="number" id="overtimeRate" step="0.01" value={overtimeRate} onChange={handlePremiumRateChange(setOvertimeRate)} onBlur={handlePremiumRateBlur(setOvertimeRate)} placeholder="例: 1.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+              <div><label htmlFor="midnightRate" className="block text-sm font-medium text-gray-700">深夜手当 (x0.25)</label><input type="number" id="midnightRate" step="0.01" value={midnightRate} onChange={handlePremiumRateChange(setMidnightRate)} onBlur={handlePremiumRateBlur(setMidnightRate)} placeholder="例: 0.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+              <div><label htmlFor="legalHolidayRate" className="block text-sm font-medium text-gray-700">法定休日出勤 (x1.35)</label><input type="number" id="legalHolidayRate" step="0.01" value={legalHolidayRate} onChange={handlePremiumRateChange(setLegalHolidayRate)} onBlur={handlePremiumRateBlur(setLegalHolidayRate)} placeholder="例: 1.35" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+              <div><label htmlFor="nonLegalHolidayRate" className="block text-sm font-medium text-gray-700">法定外休日出勤 (x1.25)</label><input type="number" id="nonLegalHolidayRate" step="0.01" value={nonLegalHolidayRate} onChange={handlePremiumRateChange(setNonLegalHolidayRate)} onBlur={handlePremiumRateBlur(setNonLegalHolidayRate)} placeholder="例: 1.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+              <div><label htmlFor="over60HoursRate" className="block text-sm font-medium text-gray-700">60時間超過 (x1.50)</label><input type="number" id="over60HoursRate" step="0.01" value={over60HoursRate} onChange={handlePremiumRateChange(setOver60HoursRate)} onBlur={handlePremiumRateBlur(setOver60HoursRate)} placeholder="例: 1.50" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+            </div>
+          </div>
+          
+          {/* Rounding & Settlement Section */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+             <h2 className="text-xl font-semibold mb-4">丸め・精算設定</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><label htmlFor="roundingUnit" className="block text-sm font-medium text-gray-700">金額丸め単位 <span className="text-red-500">*</span></label><select id="roundingUnit" value={roundingUnit} onChange={e => setRoundingUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingUnitOptions.map(o => <option key={o} value={o}>{o}円</option>)}</select></div>
+                <div><label htmlFor="roundingMethod" className="block text-sm font-medium text-gray-700">丸め方法 <span className="text-red-500">*</span></label><select id="roundingMethod" value={roundingMethod} onChange={e => setRoundingMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div><label htmlFor="settlementUnit" className="block text-sm font-medium text-gray-700">時間精算単位 <span className="text-red-500">*</span></label><select id="settlementUnit" value={settlementUnit} onChange={e => setSettlementUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{settlementUnitOptions.map(o => <option key={o} value={o}>{o}分</option>)}</select></div>
+                <div><label htmlFor="settlementMethod" className="block text-sm font-medium text-gray-700">精算丸め <span className="text-red-500">*</span></label><select id="settlementMethod" value={settlementMethod} onChange={e => setSettlementMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+             </div>
+          </div>
+
+          {/* Calculation Results Section */}
+          {hourlyCalculatedRates && (
+            <div className="p-4 border rounded-lg bg-gray-50">
+              <h2 className="text-xl font-semibold mb-4">計算結果</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <div><p className="font-medium text-gray-600">普通残業単価:</p><p className="font-semibold text-lg">{hourlyCalculatedRates.normalOvertime > 0 ? `${hourlyCalculatedRates.normalOvertime.toLocaleString()}円` : '-'}</p></div>
+                <div><p className="font-medium text-gray-600">深夜手当単価:</p><p className="font-semibold text-lg">{hourlyCalculatedRates.midnight > 0 ? `${hourlyCalculatedRates.midnight.toLocaleString()}円` : '-'}</p></div>
+                <div><p className="font-medium text-gray-600">法定休日出勤単価:</p><p className="font-semibold text-lg">{hourlyCalculatedRates.legalHoliday > 0 ? `${hourlyCalculatedRates.legalHoliday.toLocaleString()}円` : '-'}</p></div>
+                <div><p className="font-medium text-gray-600">法定外休日出勤単価:</p><p className="font-semibold text-lg">{hourlyCalculatedRates.nonLegalHoliday > 0 ? `${hourlyCalculatedRates.nonLegalHoliday.toLocaleString()}円` : '-'}</p></div>
+                <div><p className="font-medium text-gray-600">60時間超過単価:</p><p className="font-semibold text-lg">{hourlyCalculatedRates.over60Hours > 0 ? `${hourlyCalculatedRates.over60Hours.toLocaleString()}円` : '-'}</p></div>
+              </div>
+            </div>
+          )}
+
+          {/* Special Notes Section */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h2 className="text-xl font-semibold mb-4">特記事項</h2>
+            <textarea value={specialNotes} onChange={e => setSpecialNotes(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={4} />
+          </div>
+
+          {/* Issuer Info Section */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h2 className="text-xl font-semibold mb-4">発行元</h2>
+            <textarea value={contactInfo} onChange={e => setContactInfo(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={4} />
+          </div>
+
+          {/* Generate Button */}
+          <div className="md:col-span-3">
+            <button 
+              type="submit" 
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 font-bold text-lg disabled:bg-blue-400"
+              disabled={isGeneratingPdf}
+            >
+              {isGeneratingPdf ? '生成中...' : '見積書を生成'}
+            </button>
+          </div>
+
+        </form>
+      </div>
     </div>
   );
 }
