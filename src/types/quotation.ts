@@ -57,6 +57,10 @@ export interface MonthlyCalculatedRates {
   overtimeUnitPrice: number;
   deductionUnitPrice: number;
   overtimeUnitPriceWithPremium?: number;
+  monthlyMidnight?: number;
+  monthlyLegalHoliday?: number;
+  monthlyNonLegalHoliday?: number;
+  monthlyOver60Hours?: number;
 }
 
 // 全ての契約種別を統合する型 (今後拡張)

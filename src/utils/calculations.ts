@@ -59,7 +59,12 @@ export const calculateMonthlyRates = (
   customDeductionUnitPriceHours: number,
   overtimePremiumRate: number,
   roundingUnit: number,
-  roundingMethod: RoundingMethod
+  roundingMethod: RoundingMethod,
+  // New parameters for premium rates
+  midnightRate?: number,
+  legalHolidayRate?: number,
+  nonLegalHolidayRate?: number,
+  over60HoursRate?: number,
 ): MonthlyCalculatedRates => {
   let overtimeUnitPrice = 0;
   let deductionUnitPrice = 0;
@@ -112,10 +117,35 @@ export const calculateMonthlyRates = (
   // Apply rounding to deductionUnitPrice
   deductionUnitPrice = roundValue(deductionUnitPrice, roundingUnit, roundingMethod);
 
+  // Calculate monthly premium rates based on overtimeUnitPrice (or overtimeUnitPriceWithPremium)
+  const baseForPremium = overtimeUnitPriceWithPremium !== undefined ? overtimeUnitPriceWithPremium : overtimeUnitPrice;
+
+  let monthlyMidnight = undefined;
+  let monthlyLegalHoliday = undefined;
+  let monthlyNonLegalHoliday = undefined;
+  let monthlyOver60Hours = undefined;
+
+  if (midnightRate !== undefined && midnightRate > 0) {
+    monthlyMidnight = roundValue(baseForPremium * midnightRate, roundingUnit, roundingMethod);
+  }
+  if (legalHolidayRate !== undefined && legalHolidayRate > 0) {
+    monthlyLegalHoliday = roundValue(baseForPremium * legalHolidayRate, roundingUnit, roundingMethod);
+  }
+  if (nonLegalHolidayRate !== undefined && nonLegalHolidayRate > 0) {
+    monthlyNonLegalHoliday = roundValue(baseForPremium * nonLegalHolidayRate, roundingUnit, roundingMethod);
+  }
+  if (over60HoursRate !== undefined && over60HoursRate > 0) {
+    monthlyOver60Hours = roundValue(baseForPremium * over60HoursRate, roundingUnit, roundingMethod);
+  }
+
   return {
     overtimeUnitPrice,
     deductionUnitPrice,
     overtimeUnitPriceWithPremium,
+    monthlyMidnight,
+    monthlyLegalHoliday,
+    monthlyNonLegalHoliday,
+    monthlyOver60Hours,
   };
 };
 

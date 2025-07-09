@@ -40,7 +40,7 @@ export default function Home() {
   const [settlementMethod, setSettlementMethod] = useState<RoundingMethod | string>("");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-  const roundingUnitOptions = [1, 10, 100, 1000];
+  const roundingUnitOptions = [1, 10, 50, 100, 1000];
   const roundingMethods: RoundingMethod[] = ["切り捨て", "切り上げ", "四捨五入"];
   const settlementUnitOptions = [1, 3, 5, 10, 15, 30, 45, 60];
 
@@ -159,7 +159,12 @@ export default function Home() {
           cduh,
           oprm,
           ru,
-          rm
+          rm,
+          // New parameters
+          typeof midnightRate === 'number' ? midnightRate : parseFloat(String(midnightRate)) || 0,
+          typeof legalHolidayRate === 'number' ? legalHolidayRate : parseFloat(String(legalHolidayRate)) || 0,
+          typeof nonLegalHolidayRate === 'number' ? nonLegalHolidayRate : parseFloat(String(nonLegalHolidayRate)) || 0,
+          typeof over60HoursRate === 'number' ? over60HoursRate : parseFloat(String(over60HoursRate)) || 0,
         );
       }
     }
@@ -176,6 +181,10 @@ export default function Home() {
     overtimePremiumRate,
     roundingUnit,
     roundingMethod,
+    midnightRate,
+    legalHolidayRate,
+    nonLegalHolidayRate,
+    over60HoursRate,
   ]);
 
   const handleGeneratePdf = async (event: React.FormEvent) => {
@@ -367,10 +376,19 @@ export default function Home() {
                 )}
                 {contractType.startsWith('月時') && monthlyCalculatedRates && (
                   <>
-                    <div><p className="font-medium text-gray-600">超過単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.overtimeUnitPrice > 0 ? `${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円` : '-'}</p></div>
+                    <div><p className="font-medium text-gray-600">超過単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.overtimeUnitPriceWithPremium ? `${monthlyCalculatedRates.overtimeUnitPriceWithPremium.toLocaleString()}円 (${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円)` : monthlyCalculatedRates.overtimeUnitPrice > 0 ? `${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円` : '-'}</p></div>
                     <div><p className="font-medium text-gray-600">控除単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.deductionUnitPrice > 0 ? `${monthlyCalculatedRates.deductionUnitPrice.toLocaleString()}円` : '-'}</p></div>
-                    {monthlyCalculatedRates.overtimeUnitPriceWithPremium && (
-                      <div><p className="font-medium text-gray-600">割増後超過単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0 ? `${monthlyCalculatedRates.overtimeUnitPriceWithPremium.toLocaleString()}円` : '-'}</p></div>
+                    {monthlyCalculatedRates.monthlyMidnight && (
+                      <div><p className="font-medium text-gray-600">深夜手当単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.monthlyMidnight > 0 ? `${monthlyCalculatedRates.monthlyMidnight.toLocaleString()}円` : '-'}</p></div>
+                    )}
+                    {monthlyCalculatedRates.monthlyLegalHoliday && (
+                      <div><p className="font-medium text-gray-600">法定休日出勤単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.monthlyLegalHoliday > 0 ? `${monthlyCalculatedRates.monthlyLegalHoliday.toLocaleString()}円` : '-'}</p></div>
+                    )}
+                    {monthlyCalculatedRates.monthlyNonLegalHoliday && (
+                      <div><p className="font-medium text-gray-600">法定外休日出勤単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.monthlyNonLegalHoliday > 0 ? `${monthlyCalculatedRates.monthlyNonLegalHoliday.toLocaleString()}円` : '-'}</p></div>
+                    )}
+                    {monthlyCalculatedRates.monthlyOver60Hours && (
+                      <div><p className="font-medium text-gray-600">60時間超過単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.monthlyOver60Hours > 0 ? `${monthlyCalculatedRates.monthlyOver60Hours.toLocaleString()}円` : '-'}</p></div>
                     )}
                   </>
                 )}
