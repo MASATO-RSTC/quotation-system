@@ -53,5 +53,11 @@ export interface PremiumRates {
   over60hours?: number;
 }
 
+export interface MonthlyCalculatedRates {
+  overtimeUnitPrice: number;
+  deductionUnitPrice: number;
+  overtimeUnitPriceWithPremium?: number;
+}
+
 // 全ての契約種別を統合する型 (今後拡張)
 export type Quotation = MonthlyUoLdContract; // | HourlyContract | ...
