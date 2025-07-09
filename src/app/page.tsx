@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { calculateHourlyRates, RoundingMethod } from "../utils/calculations";
 import { generateQuotationPdf } from "../utils/generateQuotationPdf";
+import { ContractType } from "../types/quotation";
 
 export default function Home() {
   const [quotationNo, setQuotationNo] = useState("");
@@ -13,12 +14,13 @@ export default function Home() {
   const [personInCharge, setPersonInCharge] = useState("");
   const [staffName, setStaffName] = useState("");
   const [workContent, setWorkContent] = useState("");
-  const [billingRate, setBillingRate] = useState<number | string>(5000);
+  const [contractType, setContractType] = useState("");
+  const [billingRate, setBillingRate] = useState<number | string>(0);
   const [contractStartDate, setContractStartDate] = useState("");
   const [contractEndDate, setContractEndDate] = useState("");
   const [specialNotes, setSpecialNotes] = useState("");
   const [contactInfo, setContactInfo] = useState(
-    `株式会社リツアンSTC　エンジニアリング事業部\n担当者名：鈴木 祥\nメール：s.suzuki@ritsuan.com`
+    `株式会社リツアンSTC\nエンジニアリング事業部\n担当者名：鈴木 祥\nメール：s.suzuki@ritsuan.com`
   );
   const [overtimeRate, setOvertimeRate] = useState<number | string>(1.25);
   const [midnightRate, setMidnightRate] = useState<number | string>(0.25);
@@ -55,7 +57,7 @@ export default function Home() {
     setContractStartDate(firstDayOfMonth);
 
     const threeMonthsLater = new Date(today);
-    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 2);
     const endOfMonth = new Date(threeMonthsLater.getFullYear(), threeMonthsLater.getMonth() + 1, 0);
     const contractEndDateStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
     setContractEndDate(contractEndDateStr);
@@ -67,19 +69,16 @@ export default function Home() {
     const ru = typeof roundingUnit === 'number' ? roundingUnit : parseInt(String(roundingUnit)) || 0;
     const rm = typeof roundingMethod === 'string' && roundingMethod ? roundingMethod as RoundingMethod : "切り捨て";
 
-    if (rate > 0 && ru > 0 && rm) {
-      return calculateHourlyRates(
-        rate,
-        parseFloat(String(overtimeRate)) || 0,
-        parseFloat(String(midnightRate)) || 0,
-        parseFloat(String(legalHolidayRate)) || 0,
-        parseFloat(String(nonLegalHolidayRate)) || 0,
-        parseFloat(String(over60HoursRate)) || 0,
-        ru,
-        rm
-      );
-    }
-    return null;
+    return calculateHourlyRates(
+      rate,
+      parseFloat(String(overtimeRate)) || 0,
+      parseFloat(String(midnightRate)) || 0,
+      parseFloat(String(legalHolidayRate)) || 0,
+      parseFloat(String(nonLegalHolidayRate)) || 0,
+      parseFloat(String(over60HoursRate)) || 0,
+      ru,
+      rm
+    );
   }, [billingRate, overtimeRate, midnightRate, legalHolidayRate, nonLegalHolidayRate, over60HoursRate, roundingUnit, roundingMethod]);
 
   const handleGeneratePdf = async (event: React.FormEvent) => {
@@ -96,7 +95,7 @@ export default function Home() {
         settlementUnit: settlementUnit.toString(),
         settlementMethod: settlementMethod as RoundingMethod,
         contactInfo,
-        contractType: '時給',
+        contractType: contractType as ContractType,
       });
     } finally {
       setIsGeneratingPdf(false);
@@ -144,8 +143,19 @@ export default function Home() {
             <h2 className="text-xl font-semibold mb-4">スタッフ・契約情報</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="text-red-500">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
-              <div><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">ご請求単価 (/時) <span className="text-red-500">*</span></label><input type="number" id="billingRate" value={billingRate} onChange={e => setBillingRate(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              {contractType === '時給' && (
+                <div><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">ご請求単価 (/時) <span className="text-red-500">*</span></label><input type="number" id="billingRate" value={billingRate} onChange={e => setBillingRate(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              )}
               <div className="md:col-span-2"><label htmlFor="workContent" className="block text-sm font-medium text-gray-700">業務内容 <span className="text-red-500">*</span></label><textarea id="workContent" value={workContent} onChange={e => setWorkContent(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={3} required /></div>
+              {/* New Contract Type Selection */}
+              <div className="md:col-span-2">
+                <label htmlFor="contractType" className="block text-sm font-medium text-gray-700">契約種別 <span className="text-red-500">*</span></label>
+                <select id="contractType" value={contractType} onChange={e => setContractType(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                  <option value="">選択してください</option>
+                  <option value="時給">時給</option>
+                  <option value="月時（上限あり下限あり）">月時（上限あり下限あり）</option>
+                </select>
+              </div>
               <div className="md:col-span-2 grid grid-cols-2 gap-4">
                 <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="text-red-500">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
                 <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="text-red-500">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
@@ -153,17 +163,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Premium Rates Section */}
-          <div className="p-4 border rounded-lg bg-gray-50">
-            <h2 className="text-xl font-semibold mb-4">割増率設定</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div><label htmlFor="overtimeRate" className="block text-sm font-medium text-gray-700">普通残業 (x1.25)</label><input type="number" id="overtimeRate" step="0.01" value={overtimeRate} onChange={handlePremiumRateChange(setOvertimeRate)} onBlur={handlePremiumRateBlur(setOvertimeRate)} placeholder="例: 1.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
-              <div><label htmlFor="midnightRate" className="block text-sm font-medium text-gray-700">深夜手当 (x0.25)</label><input type="number" id="midnightRate" step="0.01" value={midnightRate} onChange={handlePremiumRateChange(setMidnightRate)} onBlur={handlePremiumRateBlur(setMidnightRate)} placeholder="例: 0.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
-              <div><label htmlFor="legalHolidayRate" className="block text-sm font-medium text-gray-700">法定休日出勤 (x1.35)</label><input type="number" id="legalHolidayRate" step="0.01" value={legalHolidayRate} onChange={handlePremiumRateChange(setLegalHolidayRate)} onBlur={handlePremiumRateBlur(setLegalHolidayRate)} placeholder="例: 1.35" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
-              <div><label htmlFor="nonLegalHolidayRate" className="block text-sm font-medium text-gray-700">法定外休日出勤 (x1.25)</label><input type="number" id="nonLegalHolidayRate" step="0.01" value={nonLegalHolidayRate} onChange={handlePremiumRateChange(setNonLegalHolidayRate)} onBlur={handlePremiumRateBlur(setNonLegalHolidayRate)} placeholder="例: 1.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
-              <div><label htmlFor="over60HoursRate" className="block text-sm font-medium text-gray-700">60時間超過 (x1.50)</label><input type="number" id="over60HoursRate" step="0.01" value={over60HoursRate} onChange={handlePremiumRateChange(setOver60HoursRate)} onBlur={handlePremiumRateBlur(setOver60HoursRate)} placeholder="例: 1.50" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+          {contractType === '時給' && (
+            <div className="p-4 border rounded-lg bg-gray-50">
+              <h2 className="text-xl font-semibold mb-4">割増率設定</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><label htmlFor="overtimeRate" className="block text-sm font-medium text-gray-700">普通残業 (x1.25)</label><input type="number" id="overtimeRate" step="0.01" value={overtimeRate} onChange={handlePremiumRateChange(setOvertimeRate)} onBlur={handlePremiumRateBlur(setOvertimeRate)} placeholder="例: 1.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div><label htmlFor="midnightRate" className="block text-sm font-medium text-gray-700">深夜手当 (x0.25)</label><input type="number" id="midnightRate" step="0.01" value={midnightRate} onChange={handlePremiumRateChange(setMidnightRate)} onBlur={handlePremiumRateBlur(setMidnightRate)} placeholder="例: 0.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div><label htmlFor="legalHolidayRate" className="block text-sm font-medium text-gray-700">法定休日出勤 (x1.35)</label><input type="number" id="legalHolidayRate" step="0.01" value={legalHolidayRate} onChange={handlePremiumRateChange(setLegalHolidayRate)} onBlur={handlePremiumRateBlur(setLegalHolidayRate)} placeholder="例: 1.35" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div><label htmlFor="nonLegalHolidayRate" className="block text-sm font-medium text-gray-700">法定外休日出勤 (x1.25)</label><input type="number" id="nonLegalHolidayRate" step="0.01" value={nonLegalHolidayRate} onChange={handlePremiumRateChange(setNonLegalHolidayRate)} onBlur={handlePremiumRateBlur(setNonLegalHolidayRate)} placeholder="例: 1.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+                <div><label htmlFor="over60HoursRate" className="block text-sm font-medium text-gray-700">60時間超過 (x1.50)</label><input type="number" id="over60HoursRate" step="0.01" value={over60HoursRate} onChange={handlePremiumRateChange(setOver60HoursRate)} onBlur={handlePremiumRateBlur(setOver60HoursRate)} placeholder="例: 1.50" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+              </div>
             </div>
-          </div>
+          )}
           
           {/* Rounding & Settlement Section */}
           <div className="p-4 border rounded-lg bg-gray-50">
@@ -177,7 +188,7 @@ export default function Home() {
           </div>
 
           {/* Calculation Results Section */}
-          {hourlyCalculatedRates && (
+          {contractType === '時給' && hourlyCalculatedRates && (
             <div className="p-4 border rounded-lg bg-gray-50">
               <h2 className="text-xl font-semibold mb-4">計算結果</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">

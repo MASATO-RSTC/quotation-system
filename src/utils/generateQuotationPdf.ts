@@ -151,7 +151,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
       },
       columnStyles: {
         0: { cellWidth: 40 },
-        1: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto', halign: 'center' },
       }
     });
 
@@ -163,7 +163,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     doc.text('【特記事項】', margin, notesTop);
     notesTop += 5;
 
-    const settlementText = `精算単位は${data.settlementUnit}分、${data.settlementMethod}。精算金額は${data.roundingUnit}円単位、${data.roundingMethod}。`;
+    const settlementText = `精算時間は${data.settlementUnit}分${data.settlementMethod}。精算金額は${data.roundingUnit}円${data.roundingMethod}。`;
     const combinedNotes = `${settlementText}\n${data.specialNotes}`.trim();
     
     doc.setFontSize(10);
