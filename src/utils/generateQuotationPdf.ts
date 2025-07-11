@@ -42,6 +42,8 @@ interface QuotationData {
     monthlyOver60Hours?: number;
   } | null;
   monthlyCalculationFormula?: string;
+  upperLimitHoursDiff?: number;
+  lowerLimitHoursDiff?: number;
 }
 
 // Helper to fetch assets
@@ -143,7 +145,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
       tableBody.push(['月給単価', formatCurrency(data.billingRate)]);
       
       // 時間幅
-      if (data.contractType === '月時（上限あり下限あり）') {
+      if (data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）') {
         tableBody.push(['時間幅', `${data.lowerLimitHours || 0}h 〜 ${data.upperLimitHours || 0}h`]);
       } else if (data.contractType === '月時（上限あり下限なし）') {
         tableBody.push(['時間幅', `下限なし〜${data.upperLimitHours || 0}h`]);
@@ -155,17 +157,26 @@ export const generateQuotationPdf = async (data: QuotationData) => {
 
       if (data.monthlyCalculatedRates) {
         // 超過単価
-        const hasOvertime = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限あり下限なし）';
+        const hasOvertime = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限あり下限なし）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）';
         if (hasOvertime && data.monthlyCalculatedRates.overtimeUnitPrice > 0) {
-            let overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPrice;
-            if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
-                overtimeDisplayValue = data.monthlyCalculatedRates.overtimeUnitPriceWithPremium;
+            let overtimeDisplayValue;
+            if (data.contractType === '月時（上限下限変動あり）') {
+                if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
+                    overtimeDisplayValue = formatCurrency(data.monthlyCalculatedRates.overtimeUnitPriceWithPremium);
+                } else {
+                    overtimeDisplayValue = formatCurrency(data.monthlyCalculatedRates.overtimeUnitPrice);
+                }
+            } else {
+                overtimeDisplayValue = formatCurrency(data.monthlyCalculatedRates.overtimeUnitPrice);
+                if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
+                    overtimeDisplayValue = `${formatCurrency(data.monthlyCalculatedRates.overtimeUnitPriceWithPremium)} (${formatCurrency(data.monthlyCalculatedRates.overtimeUnitPrice)})`;
+                }
             }
-            tableBody.push(['超過単価', formatCurrency(overtimeDisplayValue)]);
+            tableBody.push(['超過単価', overtimeDisplayValue]);
         }
         
         // 控除単価
-        const hasDeduction = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限なし下限あり）';
+        const hasDeduction = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限なし下限あり）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）';
         if (hasDeduction && data.monthlyCalculatedRates.deductionUnitPrice > 0) {
             tableBody.push(['控除単価', formatCurrency(data.monthlyCalculatedRates.deductionUnitPrice)]);
         }
@@ -231,7 +242,18 @@ export const generateQuotationPdf = async (data: QuotationData) => {
 
     let combinedNotes = `${settlementText}`;
     if (data.monthlyCalculationFormula) {
-      combinedNotes += `\n\n${data.monthlyCalculationFormula}`;
+      let formulaText = data.monthlyCalculationFormula;
+      let diffText = '';
+      if (data.upperLimitHoursDiff !== undefined && data.upperLimitHoursDiff !== null) {
+        diffText += ` 上限+${data.upperLimitHoursDiff}h`;
+      }
+      if (data.lowerLimitHoursDiff !== undefined && data.lowerLimitHoursDiff !== null) {
+        diffText += ` 下限-${Math.abs(data.lowerLimitHoursDiff)}h`;
+      }
+      if (diffText) {
+        formulaText = formulaText.replace(/（([^）]*)）/, `（$1${diffText}）`);
+      }
+      combinedNotes += `\n\n${formulaText}`;
     }
     if (data.specialNotes) {
       combinedNotes += `\n\n${data.specialNotes}`;
