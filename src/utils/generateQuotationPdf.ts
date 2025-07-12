@@ -160,7 +160,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
         const hasOvertime = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限あり下限なし）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）';
         if (hasOvertime && data.monthlyCalculatedRates.overtimeUnitPrice > 0) {
             let overtimeDisplayValue;
-            if (data.contractType === '月時（上限下限変動あり）') {
+            if (data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）') {
                 if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
                     overtimeDisplayValue = formatCurrency(data.monthlyCalculatedRates.overtimeUnitPriceWithPremium);
                 } else {
