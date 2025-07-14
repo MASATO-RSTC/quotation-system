@@ -309,7 +309,7 @@ export default function Home() {
       setOvertimePremiumRate("");
     } else { // contractType === '' (選択してください)
       // Reset all relevant fields to blank
-      setBillingRate(0); // Or "" if you want it visually blank
+      setBillingRate(""); // Or "" if you want it visually blank
       setOvertimeRate("");
       setMidnightRate("");
       setLegalHolidayRate("");
