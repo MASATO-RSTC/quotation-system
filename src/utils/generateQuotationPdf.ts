@@ -157,10 +157,10 @@ export const generateQuotationPdf = async (data: QuotationData) => {
 
       if (data.monthlyCalculatedRates) {
         // 超過単価
-        const hasOvertime = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限あり下限なし）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）';
+        const hasOvertime = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限あり下限なし）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）' || data.contractType === '月時（上限変動なし、下限変動なし）';
         if (hasOvertime && data.monthlyCalculatedRates.overtimeUnitPrice > 0) {
             let overtimeDisplayValue;
-            if (data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）') {
+            if (data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）' || data.contractType === '月時（上限変動なし、下限変動なし）') {
                 if (data.monthlyCalculatedRates.overtimeUnitPriceWithPremium !== undefined && data.monthlyCalculatedRates.overtimeUnitPriceWithPremium > 0) {
                     overtimeDisplayValue = formatCurrency(data.monthlyCalculatedRates.overtimeUnitPriceWithPremium);
                 } else {
@@ -176,7 +176,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
         }
         
         // 控除単価
-        const hasDeduction = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限なし下限あり）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）';
+        const hasDeduction = data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限なし下限あり）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）' || data.contractType === '月時（上限変動なし、下限変動なし）';
         if (hasDeduction && data.monthlyCalculatedRates.deductionUnitPrice > 0) {
             tableBody.push(['控除単価', formatCurrency(data.monthlyCalculatedRates.deductionUnitPrice)]);
         }

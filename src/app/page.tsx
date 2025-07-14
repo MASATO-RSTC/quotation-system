@@ -100,6 +100,14 @@ export default function Home() {
         setUpperLimitHours("");
         setLowerLimitHours("");
       }
+    } else if (contractType === '月時（上限変動なし、下限変動なし）') {
+      if (baseHours > 0) {
+        setUpperLimitHours(baseHours);
+        setLowerLimitHours(baseHours);
+      } else {
+        setUpperLimitHours("");
+        setLowerLimitHours("");
+      }
     }
   }, [baseHours, upperLimitHourDiff, lowerLimitHourDiff, contractType]);
 
@@ -284,7 +292,7 @@ export default function Home() {
       const br = billingRate.toLocaleString(); // Formatted billing rate
 
       // 超過計算式
-      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') && overtimeUnitPriceCalculationMethod) {
+      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && overtimeUnitPriceCalculationMethod) {
         let overtimeFormula = `超過：${br}円 ÷ `;
         let divisorValue = 0;
         let divisorLabel = '';
@@ -315,7 +323,7 @@ export default function Home() {
       }
 
       // 控除計算式
-      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') && deductionUnitPriceCalculationMethod) {
+      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && deductionUnitPriceCalculationMethod) {
         let deductionFormula = `控除：${br}円 ÷ `;
         let divisorValue = 0;
         let divisorLabel = '';
@@ -517,7 +525,7 @@ export default function Home() {
               )}
 
               {/* --- Overtime Fields --- */}
-              {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') && (
+              {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && (
                 <>
                   <div className="md:col-span-2">
                     <label htmlFor="overtimeUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">超過単価の算出基準 <span className="text-red-500">*</span></label>
@@ -543,7 +551,7 @@ export default function Home() {
               )}
 
               {/* --- Deduction Fields --- */}
-              {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') && (
+              {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && (
                 <>
                   <div className="md:col-span-2">
                     <label htmlFor="deductionUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">控除単価の算出基準 <span className="text-red-500">*</span></label>
@@ -574,7 +582,7 @@ export default function Home() {
               )}
               
               {/* Show for hourly and monthly-with-upper-limit contracts */}
-              {(contractType === '時給' || contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') && (
+              {(contractType === '時給' || contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && (
                   <>
                       <div><label htmlFor="midnightRate" className="block text-sm font-medium text-gray-700">深夜手当 (x0.25)</label><input type="number" id="midnightRate" step="0.01" value={midnightRate} onChange={handlePremiumRateChange(setMidnightRate)} onBlur={handlePremiumRateBlur(setMidnightRate)} placeholder="例: 0.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
                       <div><label htmlFor="legalHolidayRate" className="block text-sm font-medium text-gray-700">法定休日出勤 (x1.35)</label><input type="number" id="legalHolidayRate" step="0.01" value={legalHolidayRate} onChange={handlePremiumRateChange(setLegalHolidayRate)} onBlur={handlePremiumRateBlur(setLegalHolidayRate)} placeholder="例: 1.35" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
@@ -616,10 +624,10 @@ export default function Home() {
                 )}
                 {contractType.startsWith('月時') && monthlyCalculatedRates && (
                   <>
-                    {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') &&
+                    {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') &&
                       <div><p className="font-medium text-gray-600">超過単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.overtimeUnitPriceWithPremium ? `${monthlyCalculatedRates.overtimeUnitPriceWithPremium.toLocaleString()}円 (${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円)` : monthlyCalculatedRates.overtimeUnitPrice > 0 ? `${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円` : '-'}</p></div>
                     }
-                    {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') &&
+                    {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') &&
                       <div><p className="font-medium text-gray-600">控除単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.deductionUnitPrice > 0 ? `${monthlyCalculatedRates.deductionUnitPrice.toLocaleString()}円` : '-'}</p></div>
                     }
                     {monthlyCalculatedRates.monthlyMidnight && (
