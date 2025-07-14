@@ -112,7 +112,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     // 3. Client Info
     const clientTop = infoTop + 25;
     doc.setFontSize(12);
-    doc.text(`▪御社名： ${data.companyName} 御中`, margin, clientTop + 10);
+    doc.text(`▪御社名： ${data.companyName}`, margin, clientTop + 10);
     let nextLine = clientTop + 18;
     if (data.departmentName) {
       doc.text(`▪部署名： ${data.departmentName}`, margin, nextLine);
@@ -285,7 +285,14 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     doc.rect(margin, notesTop, pageW - (margin * 2), boxHeight);
     doc.text(textLines, margin + boxPadding, notesTop + boxPadding + 2);
 
-    doc.save('御見積書.pdf');
+    const sanitizeFilename = (name: string) => name.replace(/[/\\?%*:|"<>\.]/g, '_');
+    const formattedContractStartDate = data.contractStartDate.replace(/-/g, '');
+    const formattedContractEndDate = data.contractEndDate.replace(/-/g, '');
+    const formattedCreationDate = data.creationDate.replace(/-/g, '');
+
+    const filename = `${sanitizeFilename(data.companyName)}_${sanitizeFilename(data.staffName)}（${formattedContractStartDate}〜${formattedContractEndDate}）_${formattedCreationDate}.pdf`;
+
+    doc.save(filename);
   } catch (error) {
     console.error('Error generating PDF:', error);
     alert('PDFの生成に失敗しました。コンソールを確認してください。');

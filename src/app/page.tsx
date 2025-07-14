@@ -15,7 +15,7 @@ export default function Home() {
   const [staffName, setStaffName] = useState("");
   const [workContent, setWorkContent] = useState("");
   const [contractType, setContractType] = useState("");
-  const [billingRate, setBillingRate] = useState<number | string>(0);
+  const [billingRate, setBillingRate] = useState<string>("");
   const [upperLimitHours, setUpperLimitHours] = useState<number | string>("");
   const [lowerLimitHours, setLowerLimitHours] = useState<number | string>("");
   const [overtimeUnitPriceCalculationMethod, setOvertimeUnitPriceCalculationMethod] = useState<string>("");
@@ -44,6 +44,144 @@ export default function Home() {
   const [upperLimitHourDiff, setUpperLimitHourDiff] = useState<number | string>("");
   const [lowerLimitHourDiff, setLowerLimitHourDiff] = useState<number | string>("");
   const [variableCalculationType, setVariableCalculationType] = useState("");
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+
+  const contractTypeDescriptions: { [key: string]: string } = {
+    "時給": `実際に働いた時間（実働時間）に対して、1時間あたりいくらという金額で請求する契約です。
+
+■特徴
+• 例）「1時間あたり ¥3,000」で、160時間働けば「¥480,000」の請求になります。
+• 残業や深夜勤務がある場合、所定の割増率（1.25倍など）を加えて計算します。
+• 請求対象の時間は、15分単位や30分単位など「精算単位」で丸め処理を行います。
+
+■計算に必要な項目
+・ご請求単価
+・割増率設定（普通残業, 深夜手当, 法定休日出勤, 法定外休日出勤, 60時間超過）
+・丸め・精算設定（金額丸め単位, 丸め方法, 時間精算単位, 精算丸め）`,
+    "月時（上限あり下限あり）": `月の稼働時間に対して上限と下限の時間を設定する、最も標準的な月給契約です。
+
+■特徴
+• 設定された時間を下回った場合は控除単価で減額され、上回った場合は超過単価で追加請求されます。
+• 例）140h〜180hで契約した場合、140h未満は控除、180h超は超過の対象となります。
+• 超過・控除単価の計算方法は「上限で割る」「下限で割る」などから選択できます。
+
+■計算に必要な項目
+・月給単価
+・上限時間 / 下限時間
+・超過単価の算出基準（任意時間割の場合は任意時間も）
+・控除単価の算出基準（任意時間割の場合は任意時間も）
+・割増係数（超過単価のみ）
+・割増率設定
+・丸め・精算設定`,
+    "月時（上限あり下限なし）": `「この時間までは定額。それ以上は追加で請求」という、上限時間だけを設定する契約です。
+
+■特徴
+• 設定した上限時間を超えた分だけ、追加で請求が可能です。
+• 下限時間がないため、稼働時間が少なくても減額（控除）は発生しません。
+
+■計算に必要な項目
+・月給単価
+・上限時間
+・超過単価の算出基準（任意時間割の場合は任意時間も）
+・割増係数（超過単価のみ）
+・割増率設定
+・丸め・精算設定`,
+    "月時（上限なし下限あり）": `月の稼働時間に対して下限時間のみを設定する契約です。
+
+■特徴
+• 設定した下限時間を下回った場合のみ、減額（控除）が発生します。
+• 上限時間がないため、どれだけ長時間稼働しても超過分の追加請求は発生しません。
+• エンジニアの負荷管理に注意が必要な契約です。
+
+■計算に必要な項目
+・月給単価
+・下限時間
+・控除単価の算出基準（任意時間割の場合は任意時間も）
+・割増率設定
+・丸め・精算設定`,
+    "月時（完全固定）": `稼働時間に関係なく、毎月一定額を請求する契約です。
+
+■特徴
+• 実際に何時間働いても、金額は変わりません。
+• 超過・控除・割増などの概念もありません。
+• 単純で明快な契約ですが、稼働の変動リスクはエンジニア側が負うことになります。
+
+■計算に必要な項目
+・月給単価
+・時間精算単位 / 精算丸め`,
+    "月時（上限下限変動あり）": `毎月の出勤日数などに応じて、上下限時間そのものが変動する契約です。
+
+■特徴
+• 例）出勤20日, 所定8h, 変動幅±20hなら、時間幅は140h〜180h（160h±20h）となります。
+• 超過・控除単価も毎月異なる可能性があります。
+
+■計算に必要な項目
+・月給単価
+・変動設定（労働日数/月, 労働時間/日）
+・上限時間(差分) / 下限時間(差分)
+・計算タイプ（特記事項用）
+・超過・控除単価の算出基準
+・割増係数（超過単価のみ）
+・割増率設定
+・丸め・精算設定`,
+    "月時（上限変動あり、下限変動なし）": `上限時間は出勤日数などで変わるが、下限は固定（基準時間）の契約です。
+
+■特徴
+• 例）出勤日数×7.5h＋20hなどで上限時間を設定します。
+• 超過単価の計算が月ごとに異なりますが、控除単価は常に一定の時間で計算します。
+
+■計算に必要な項目
+・月給単価
+・変動設定（労働日数/月, 労働時間/日）
+・上限時間(差分)
+・計算タイプ（特記事項用）
+・超過・控除単価の算出基準
+・割増係数（超過単価のみ）
+・割増率設定
+・丸め・精算設定`,
+    "月時（上限変動なし、下限変動あり）": `下限時間は出勤日数などで変わるが、上限は固定（基準時間）の契約です。
+
+■特徴
+• 例）出勤日数×8h−20hなどで下限時間を算出します。
+• 控除単価が月ごとに変わり、超過単価は常に一定の時間を元に計算します。
+
+■計算に必要な項目
+・月給単価
+・変動設定（労働日数/月, 労働時間/日）
+・下限時間(差分)
+・計算タイプ（特記事項用）
+・超過・控除単価の算出基準
+・割増係数（超過単価のみ）
+・割増率設定
+・丸め・精算設定`,
+    "月時（上限変動なし、下限変動なし）": `上限・下限ともに出勤日数などで変動する契約です。
+
+■特徴
+• 時間幅は「出勤日数 × 労働時間」に基づき、毎月変動します。
+• 上下限の固定値がなく、毎月都度確認が必要な柔軟契約です。
+
+■計算に必要な項目
+・月給単価
+・変動設定（労働日数/月, 労働時間/日）
+・計算タイプ（特記事項用）
+・超過・控除単価の算出基準
+・割増係数（超過単価のみ）
+・割増率設定
+・丸め・精算設定`,
+  };
+
+  const handleBillingRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/,/g, '');
+    if (rawValue === '' || /^[0-9]+$/.test(rawValue)) {
+      setBillingRate(rawValue);
+    }
+  };
+
+  const formatNumberWithCommas = (value: string) => {
+    if (!value) return '';
+    const numberValue = parseInt(value, 10);
+    return isNaN(numberValue) ? '' : numberValue.toLocaleString();
+  };
 
   const variableCalculationTypeOptions = [
     "所定労働日数 × 法定労働時間",
@@ -375,7 +513,7 @@ export default function Home() {
     try {
       await generateQuotationPdf({
         quotationNo, creationDate, validUntil, companyName, departmentName, personInCharge, staffName, contractStartDate, contractEndDate, workContent,
-        billingRate: typeof billingRate === 'number' ? billingRate : 0,
+        billingRate: parseFloat(billingRate) || 0,
         hourlyCalculatedRates,
         // New fields for monthly contracts
         upperLimitHours: typeof upperLimitHours === 'number' ? upperLimitHours : parseFloat(String(upperLimitHours)) || 0,
@@ -440,11 +578,28 @@ export default function Home() {
               <div><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="text-red-500">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">
                 {contractType === '時給' ? 'ご請求単価 (/時)' : contractType.startsWith('月時') ? '月給単価' : '単価'} <span className="text-red-500">*</span>
-              </label><input type="number" id="billingRate" value={billingRate} onChange={e => setBillingRate(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              </label><input type="text" id="billingRate" value={formatNumberWithCommas(billingRate)} onChange={handleBillingRateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div className="md:col-span-2"><label htmlFor="workContent" className="block text-sm font-medium text-gray-700">業務内容 <span className="text-red-500">*</span></label><textarea id="workContent" value={workContent} onChange={e => setWorkContent(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={3} required /></div>
               {/* New Contract Type Selection */}
               <div className="md:col-span-2">
-                <label htmlFor="contractType" className="block text-sm font-medium text-gray-700">契約種別 <span className="text-red-500">*</span></label>
+                <div className="flex items-center">
+                  <label htmlFor="contractType" className="block text-sm font-medium text-gray-700">契約種別 <span className="text-red-500">*</span></label>
+                  <div 
+                    className="relative ml-2"
+                    onMouseEnter={() => setShowInfoTooltip(true)}
+                    onMouseLeave={() => setShowInfoTooltip(false)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {showInfoTooltip && contractType && (
+                      <div className="absolute bottom-full mb-2 w-72 bg-gray-800 text-white text-xs rounded py-2 px-3 z-10 whitespace-pre-wrap">
+                        <h4 className="font-bold text-sm mb-1">{contractType}</h4>
+                        <p>{contractTypeDescriptions[contractType]}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <select id="contractType" value={contractType} onChange={e => setContractType(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                   <option value="">選択してください</option>
                   <option value="時給">時給</option>
