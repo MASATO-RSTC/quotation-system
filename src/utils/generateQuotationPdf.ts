@@ -205,7 +205,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
       tableBody.push(['60時間超過', formatCurrency(data.hourlyCalculatedRates.over60Hours)]);
     }
 
-    (doc as any).autoTable({
+    (doc as jsPDF & { lastAutoTable: { finalY: number } }).autoTable({
       startY: tableTop,
       head: tableHeader,
       body: tableBody,
@@ -226,7 +226,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
       }
     });
 
-    const lastTableY = (doc as any).lastAutoTable.finalY;
+    const lastTableY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 
     // 6. Special Notes
     let notesTop = lastTableY + 10;

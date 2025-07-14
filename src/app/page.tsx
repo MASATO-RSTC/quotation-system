@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { calculateHourlyRates, calculateMonthlyRates } from "../utils/calculations";
 import { generateQuotationPdf } from "../utils/generateQuotationPdf";
-import { ContractType, MonthlyCalculatedRates, RoundingMethod } from "../types/quotation";
+import { ContractType, RoundingMethod } from "../types/quotation";
 
 export default function Home() {
   const [quotationNo, setQuotationNo] = useState("");
@@ -396,8 +396,6 @@ export default function Home() {
     legalHolidayRate,
     nonLegalHolidayRate,
     over60HoursRate,
-    workingDaysPerMonth, // Add dependency
-    workingHoursPerDay, // Add dependency
   ]);
 
   const monthlyCalculationFormula = useMemo(() => {
