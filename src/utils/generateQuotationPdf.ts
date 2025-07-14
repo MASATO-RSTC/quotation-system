@@ -242,18 +242,32 @@ export const generateQuotationPdf = async (data: QuotationData) => {
 
     let combinedNotes = `${settlementText}`;
     if (data.monthlyCalculationFormula) {
-      let formulaText = data.monthlyCalculationFormula;
+      const formulaLines = data.monthlyCalculationFormula.split('\n');
+      let titleLine = formulaLines[0];
+      const calculationLines = formulaLines.slice(1);
+
       let diffText = '';
-      if (data.upperLimitHoursDiff !== undefined && data.upperLimitHoursDiff !== null) {
+      if (data.upperLimitHoursDiff !== undefined && data.upperLimitHoursDiff !== null && data.upperLimitHoursDiff > 0) {
         diffText += ` 上限+${data.upperLimitHoursDiff}h`;
       }
-      if (data.lowerLimitHoursDiff !== undefined && data.lowerLimitHoursDiff !== null) {
+      if (data.lowerLimitHoursDiff !== undefined && data.lowerLimitHoursDiff !== null && data.lowerLimitHoursDiff > 0) {
         diffText += ` 下限-${Math.abs(data.lowerLimitHoursDiff)}h`;
       }
+
       if (diffText) {
-        formulaText = formulaText.replace(/（([^）]*)）/, `（$1${diffText}）`);
+        // 括弧の内部に差分テキストを挿入する
+        const closingParenIndex = titleLine.lastIndexOf('）');
+        if (closingParenIndex !== -1) {
+          titleLine = `${titleLine.slice(0, closingParenIndex)}${diffText}${titleLine.slice(closingParenIndex)}`;
+        } else {
+          titleLine += ` (${diffText.trim()})`
+        }
       }
-      combinedNotes += `\n\n${formulaText}`;
+
+      combinedNotes += `\n\n${titleLine}`;
+      if (calculationLines.length > 0) {
+        combinedNotes += `\n${calculationLines.join('\n')}`;
+      }
     }
     if (data.specialNotes) {
       combinedNotes += `\n\n${data.specialNotes}`;

@@ -255,7 +255,15 @@ export default function Home() {
   ]);
 
   const monthlyCalculationFormula = useMemo(() => {
-    const monthlyTypesWithOptions = ['月時（上限あり下限あり）', '月時（上限あり下限なし）', '月時（上限なし下限あり）', '月時（上限下限変動あり）'];
+    const monthlyTypesWithOptions = [
+      '月時（上限あり下限あり）',
+      '月時（上限あり下限なし）',
+      '月時（上限なし下限あり）',
+      '月時（上限下限変動あり）',
+      '月時（上限変動あり、下限変動なし）',
+      '月時（上限変動なし、下限変動あり）',
+      '月時（上限変動なし、下限変動なし）'
+    ];
     const variableTypes = ['月時（上限下限変動あり）', '月時（上限変動あり、下限変動なし）', '月時（上限変動なし、下限変動あり）', '月時（上限変動なし、下限変動なし）'];
 
     if (monthlyTypesWithOptions.includes(contractType) && monthlyCalculatedRates && (monthlyCalculatedRates.overtimeUnitPrice > 0 || monthlyCalculatedRates.deductionUnitPrice > 0)) {
@@ -276,7 +284,7 @@ export default function Home() {
       const br = billingRate.toLocaleString(); // Formatted billing rate
 
       // 超過計算式
-      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）') && overtimeUnitPriceCalculationMethod) {
+      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') && overtimeUnitPriceCalculationMethod) {
         let overtimeFormula = `超過：${br}円 ÷ `;
         let divisorValue = 0;
         let divisorLabel = '';
@@ -307,7 +315,7 @@ export default function Home() {
       }
 
       // 控除計算式
-      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）') && deductionUnitPriceCalculationMethod) {
+      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）') && deductionUnitPriceCalculationMethod) {
         let deductionFormula = `控除：${br}円 ÷ `;
         let divisorValue = 0;
         let divisorLabel = '';
@@ -348,6 +356,9 @@ export default function Home() {
     customDeductionUnitPriceHours,
     overtimePremiumRate,
     monthlyCalculatedRates,
+    variableCalculationType, // Add dependency
+    workingDaysPerMonth, // Add dependency
+    workingHoursPerDay, // Add dependency
   ]);
 
   const handleGeneratePdf = async (event: React.FormEvent) => {
