@@ -1,4 +1,4 @@
-import { RoundingMethod } from "../types/quotation";
+import { MonthlyCalculatedRates, RoundingMethod } from "../types/quotation";
 
 export type DiscountMethod = "上限時間" | "下限時間" | "中央時間" | "任意の値";
 export type FluctuationType = "所定労働日数 × 法定労働時間" | "出勤日数 × 所定労働時間" | "所定労働日数 × 所定労働時間" | "出勤日数 × 法定労働時間";
