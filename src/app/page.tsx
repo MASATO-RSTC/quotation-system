@@ -711,9 +711,9 @@ export default function Home() {
           {/* Client Info Section */}
           <div className="p-4 border rounded-lg bg-gray-50">
             <h2 className="text-xl font-semibold mb-4">顧客情報</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div><label htmlFor="companyName" className="block text-sm font-medium text-gray-700">企業名 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="text" id="companyName" value={companyName} onChange={e => setCompanyName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
-              <div><label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">部署名</label><input type="text" id="departmentName" value={departmentName} onChange={e => setDepartmentName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <div><label htmlFor="companyName" className="block text-sm font-medium text-gray-700 h-6 flex items-center">企業名 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="text" id="companyName" value={companyName} onChange={e => setCompanyName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="departmentName" className="block text-sm font-medium text-gray-700 h-6 flex items-center">部署名</label><input type="text" id="departmentName" value={departmentName} onChange={e => setDepartmentName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
               <div className="md:col-span-2"><label htmlFor="personInCharge" className="block text-sm font-medium text-gray-700">担当者氏名</label><input type="text" id="personInCharge" value={personInCharge} onChange={e => setPersonInCharge(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
             </div>
           </div>
@@ -722,10 +722,7 @@ export default function Home() {
           <div className="p-4 border rounded-lg bg-gray-50">
             <h2 className="text-xl font-semibold mb-4">スタッフ・契約情報</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
-              <div><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">
-                {contractType === '時給' ? 'ご請求単価 (/時)' : contractType.startsWith('月時') ? '月給単価' : '単価'} <span className="ml-1 text-red-500 font-bold text-lg">*</span>
-              </label><input type="text" id="billingRate" value={formatNumberWithCommas(billingRate)} onChange={handleBillingRateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div className="md:col-span-2"><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div className="md:col-span-2"><label htmlFor="workContent" className="block text-sm font-medium text-gray-700">業務内容 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><textarea id="workContent" value={workContent} onChange={e => setWorkContent(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={3} required /></div>
               {/* New Contract Type Selection */}
               <div className="md:col-span-2">
@@ -761,6 +758,9 @@ export default function Home() {
                   <option value="月時（上限変動なし、下限変動なし）">月時（上限変動なし、下限変動なし）</option>
                 </select>
               </div>
+              <div className="md:col-span-2"><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">
+                {contractType === '時給' ? 'ご請求単価 (/時)' : contractType.startsWith('月時') ? '月給単価' : '単価'} <span className="ml-1 text-red-500 font-bold text-lg">*</span>
+              </label><input type="text" id="billingRate" value={formatNumberWithCommas(billingRate)} onChange={handleBillingRateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div className="md:col-span-2 grid grid-cols-2 gap-4">
                 <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
                 <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
