@@ -642,8 +642,8 @@ export default function Home() {
                         <thead><tr className="bg-gray-200"><th className="border p-2 text-left">PDF記載項目</th><th className="border p-2 text-left">フォームの対応項目</th></tr></thead>
                         <tbody>
                           <tr className="bg-white"><td className="border p-2">見積書No.</td><td className="border p-2">見積書No. (自動)</td></tr>
-                          <tr className="bg-gray-50"><td className="border p-2">作成日</td><td className="border p-2">作成日 (<strong class="text-red-600">必須</strong>)</td></tr>
-                          <tr className="bg-white"><td className="border p-2">会社名</td><td className="border p-2">企業名 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">作成日</td><td className="border p-2">作成日 (<strong className="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">会社名</td><td className="border p-2">企業名 (<strong className="text-red-600">必須</strong>)</td></tr>
                           <tr className="bg-gray-50"><td className="border p-2">部署名, 担当者氏名</td><td className="border p-2">部署名 (任意), 担当者氏名 (任意)</td></tr>
                           <tr className="bg-white"><td className="border p-2">発行元情報</td><td className="border p-2">発行元 (任意)</td></tr>
                         </tbody>
@@ -654,10 +654,10 @@ export default function Home() {
                       <table className="w-full text-xs border-collapse">
                         <thead><tr className="bg-gray-200"><th className="border p-2 text-left">PDF記載項目</th><th className="border p-2 text-left">フォームの対応項目</th></tr></thead>
                         <tbody>
-                          <tr className="bg-white"><td className="border p-2">件名</td><td className="border p-2">業務内容 (<strong class="text-red-600">必須</strong>)</td></tr>
-                          <tr className="bg-gray-50"><td className="border p-2">スタッフ氏名</td><td className="border p-2">スタッフ氏名 (<strong class="text-red-600">必須</strong>)</td></tr>
-                          <tr className="bg-white"><td className="border p-2">契約期間</td><td className="border p-2">契約開始日 (<strong class="text-red-600">必須</strong>) 〜 契約終了日 (<strong class="text-red-600">必須</strong>)</td></tr>
-                          <tr className="bg-gray-50"><td className="border p-2">有効期限</td><td className="border p-2">有効期限 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">件名</td><td className="border p-2">業務内容 (<strong className="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">スタッフ氏名</td><td className="border p-2">スタッフ氏名 (<strong className="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">契約期間</td><td className="border p-2">契約開始日 (<strong className="text-red-600">必須</strong>) 〜 契約終了日 (<strong className="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">有効期限</td><td className="border p-2">有効期限 (<strong className="text-red-600">必須</strong>)</td></tr>
                         </tbody>
                       </table>
                     </div>
@@ -666,9 +666,9 @@ export default function Home() {
                       <table className="w-full text-xs border-collapse">
                          <thead><tr className="bg-gray-200"><th className="border p-2 text-left">PDF記載項目</th><th className="border p-2 text-left">フォームの対応項目 / 計算結果</th></tr></thead>
                         <tbody>
-                          <tr className="bg-white"><td className="border p-2">ご請求単価 or 月給単価</td><td className="border p-2">ご請求単価 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">ご請求単価 or 月給単価</td><td className="border p-2">ご請求単価 (<strong className="text-red-600">必須</strong>)</td></tr>
                           <tr className="bg-gray-50"><td className="border p-2">超過単価, 控除単価</td><td className="border p-2">「計算結果」に表示された単価が反映されます。</td></tr>
-                          <tr className="bg-white"><td className="border p-2">深夜・休日・60h超単価</td><td className="border p-2">「計算結果」に表示された単価が反映されます。<br/><span class="text-gray-500">※割増率設定で入力した場合に表示</span></td></tr>
+                          <tr className="bg-white"><td className="border p-2">深夜・休日・60h超単価</td><td className="border p-2">「計算結果」に表示された単価が反映されます。<br/><span className="text-gray-500">※割増率設定で入力した場合に表示</span></td></tr>
                         </tbody>
                       </table>
                     </div>
