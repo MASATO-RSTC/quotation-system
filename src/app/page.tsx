@@ -45,6 +45,7 @@ export default function Home() {
   const [lowerLimitHourDiff, setLowerLimitHourDiff] = useState<number | string>("");
   const [variableCalculationType, setVariableCalculationType] = useState("");
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const contractTypeDescriptions: { [key: string]: string } = {
     "時給": `実際に働いた時間（実働時間）に対して、1時間あたりいくらという金額で請求する契約です。
@@ -546,16 +547,164 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">御見積書</h1>
+        <div className="flex items-center justify-center mb-6">
+          <h1 className="text-2xl font-bold text-center">御見積書</h1>
+          <div 
+            className="relative ml-2 cursor-pointer"
+            onClick={() => setShowHelpModal(true)}
+          >
+            <div className="h-6 w-6 bg-blue-500 text-white rounded-full flex items-center justify-center">
+              <span className="text-lg font-bold">?</span>
+            </div>
+          </div>
+        </div>
+
+        {showHelpModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-6 sm:p-8 rounded-lg shadow-xl max-w-4xl w-full">
+              <div className="flex justify-between items-start">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">見積書作成ツール 操作ガイド</h2>
+                <button onClick={() => setShowHelpModal(false)} className="text-gray-500 hover:text-gray-800 text-2xl font-bold -mt-2 -mr-2 p-2">&times;</button>
+              </div>
+              <div className="text-sm sm:text-base space-y-6 max-h-[80vh] overflow-y-auto pr-4 -mr-4">
+
+                {/* --- 1. 入力内容について --- */}
+                <div className="p-4 border-l-4 border-blue-500 bg-blue-50 rounded-r-lg">
+                  <h3 className="font-bold text-lg mb-3 text-blue-800">【１】入力内容について</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-800">■ 基本情報・顧客情報</h4>
+                      <p className="text-xs text-gray-600 pl-2">見積書の宛名や日付など、基本的な情報を入力します。ページを開いた時点で、一部は自動入力されています。</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800">■ スタッフ・契約情報</h4>
+                      <p className="text-xs text-gray-600 pl-2 mb-2">ここが一番大事なエリアです。<strong className="text-red-600">「契約種別」</strong>を選ぶと、その契約に必要な入力欄が自動で表示されます。</p>
+                      <div className="text-xs p-3 bg-white rounded border border-gray-200">
+                        <p className="font-semibold mb-1">契約種別ごとの詳しい説明：</p>
+                        
+                        <details className="mb-2 p-2 rounded bg-gray-50">
+                          <summary className="font-semibold cursor-pointer">A. 時給</summary>
+                          <div className="mt-2 pl-4 border-l-2 border-gray-300">
+                            <p className="mb-1">働いた時間分だけ請求する、一番シンプルな契約です。</p>
+                            <ul className="list-disc list-inside">
+                              <li><span className="font-semibold">ご請求単価:</span> 1時間あたりの単価を入力します。</li>
+                              <li><span className="font-semibold">割増率設定:</span> 深夜や休日に働いた場合の割増単価を計算するために使います。</li>
+                            </ul>
+                          </div>
+                        </details>
+
+                        <details className="p-2 rounded bg-gray-50">
+                          <summary className="font-semibold cursor-pointer">B. 月給（各パターン）</summary>
+                          <div className="mt-2 pl-4 border-l-2 border-gray-300 space-y-3">
+                            <div>
+                              <p className="font-semibold">月時（上限あり下限あり）</p>
+                              <p className="text-xs text-gray-600">「140h〜180h」のように、時間の幅を決める最も標準的な契約。時間を超えたら「超過」、足りなければ「控除」が発生します。<br/>→<strong className="text-blue-600">超過・控除・割増係数・割増率</strong>の全てが設定可能です。</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold">月時（上限あり下限なし）</p>
+                              <p className="text-xs text-gray-600">「180hまで」のように上限だけを決める契約。時間を超えたら「超過」が発生しますが、稼働が少なくても控除（減額）はありません。<br/>→<strong className="text-blue-600">超過・割増係数・割増率</strong>が設定可能です。</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold">月時（上限なし下限あり）</p>
+                              <p className="text-xs text-gray-600">「140hから」のように下限だけを決める契約。稼働が少ないと控除が発生しますが、いくら働いても超過にはなりません。<br/>→<strong className="text-blue-600">控除単価</strong>のみ設定可能です。超過の概念がないため、割増係数や割増率の設定はありません。</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold">月時（完全固定）</p>
+                              <p className="text-xs text-gray-600">稼働時間に関わらず、毎月決まった額を請求する契約。<br/>→ 超過・控除の概念がないため、関連する入力項目は全て表示されません。</p>
+                            </div>
+                             <div>
+                              <p className="font-semibold">月時（変動系）</p>
+                              <p className="text-xs text-gray-600">毎月の「労働日数/月」と「労働時間/日」で自動計算された上限・下限時間をもとに、超過単価や控除単価が計算されます。<br/>→ 例えば「上限下限変動あり」なら、変動後の上限・下限時間を使って「上限割」や「下限割」の計算が行われる、という仕組みです。</p>
+                            </div>
+                            <div className="!mt-4 pt-3 border-t border-gray-300">
+                              <p className="font-semibold text-gray-700">【月給契約の補足】</p>
+                              <ul className="list-disc list-inside text-xs text-gray-600 space-y-1 mt-1">
+                                <li><strong>算出基準:</strong> 超過・控除単価を「月給 ÷ 何時間で計算するか」を決めるルールです。「任意時間割」を選ぶと、専用の入力欄が表示されます。</li>
+                                <li><strong>割増係数:</strong> 超過単価が設定される契約で、計算された単価をさらに割り増ししたい場合に使います。(例: 1.25倍)</li>
+                                <li><strong>割増率設定:</strong> 超過とは別に、深夜労働や休日出勤の単価も設定できます。これらの単価は、設定された「超過単価」を元に計算されます。</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- 2. PDF出力内容について --- */}
+                <div className="p-4 border-l-4 border-purple-500 bg-purple-50 rounded-r-lg">
+                  <h3 className="font-bold text-lg mb-3 text-purple-800">【２】PDF出力内容について</h3>
+                  <p className="text-xs text-gray-600 mb-3">フォームで入力・計算された内容は、PDFの以下の場所に反映されます。</p>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-800">■ 宛名・基本情報</h4>
+                      <table className="w-full text-xs border-collapse">
+                        <thead><tr className="bg-gray-200"><th className="border p-2 text-left">PDF記載項目</th><th className="border p-2 text-left">フォームの対応項目</th></tr></thead>
+                        <tbody>
+                          <tr className="bg-white"><td className="border p-2">見積書No.</td><td className="border p-2">見積書No. (自動)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">作成日</td><td className="border p-2">作成日 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">会社名</td><td className="border p-2">企業名 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">部署名, 担当者氏名</td><td className="border p-2">部署名 (任意), 担当者氏名 (任意)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">発行元情報</td><td className="border p-2">発行元 (任意)</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800">■ 見積もり内容</h4>
+                      <table className="w-full text-xs border-collapse">
+                        <thead><tr className="bg-gray-200"><th className="border p-2 text-left">PDF記載項目</th><th className="border p-2 text-left">フォームの対応項目</th></tr></thead>
+                        <tbody>
+                          <tr className="bg-white"><td className="border p-2">件名</td><td className="border p-2">業務内容 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">スタッフ氏名</td><td className="border p-2">スタッフ氏名 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">契約期間</td><td className="border p-2">契約開始日 (<strong class="text-red-600">必須</strong>) 〜 契約終了日 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">有効期限</td><td className="border p-2">有効期限 (<strong class="text-red-600">必須</strong>)</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800">■ 見積明細（中央のテーブル）</h4>
+                      <table className="w-full text-xs border-collapse">
+                         <thead><tr className="bg-gray-200"><th className="border p-2 text-left">PDF記載項目</th><th className="border p-2 text-left">フォームの対応項目 / 計算結果</th></tr></thead>
+                        <tbody>
+                          <tr className="bg-white"><td className="border p-2">ご請求単価 or 月給単価</td><td className="border p-2">ご請求単価 (<strong class="text-red-600">必須</strong>)</td></tr>
+                          <tr className="bg-gray-50"><td className="border p-2">超過単価, 控除単価</td><td className="border p-2">「計算結果」に表示された単価が反映されます。</td></tr>
+                          <tr className="bg-white"><td className="border p-2">深夜・休日・60h超単価</td><td className="border p-2">「計算結果」に表示された単価が反映されます。<br/><span class="text-gray-500">※割増率設定で入力した場合に表示</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                     <div>
+                      <h4 className="font-semibold text-gray-800">■ 特記事項</h4>
+                      <p className="text-xs text-gray-600 pl-2 mb-1">ここには、手入力した内容と、システムが自動で追加する情報が<strong className="text-red-600">合体</strong>して表示されます。</p>
+                      <div className="text-xs p-3 bg-white rounded border border-gray-200">
+                        <p className="font-semibold mb-1">【自動で追加される情報】</p>
+                        <ul className="list-disc list-inside pl-2">
+                          <li><span className="font-semibold">単価の計算式:</span> 月給契約のとき、どのルールで単価を計算したかの式が自動で入ります。（例: `超過：500,000円 ÷ 180.0h`）</li>
+                          <li><span className="font-semibold">丸め・精算ルール:</span> 設定した丸め単位や方法が文章で入ります。（例: `・金額は10円単位で切り捨てます。`）</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div className="text-right mt-6">
+                <button onClick={() => setShowHelpModal(false)} className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  閉じる
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleGeneratePdf} className="space-y-6">
           
           {/* Basic Info Section */}
           <div className="p-4 border rounded-lg bg-gray-50">
             <h2 className="text-xl font-semibold mb-4">基本情報</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div><label htmlFor="quotationNo" className="block text-sm font-medium text-gray-700">見積書No. <span className="text-red-500">*</span></label><input type="text" id="quotationNo" value={quotationNo} onChange={e => setQuotationNo(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" readOnly required /></div>
-              <div><label htmlFor="creationDate" className="block text-sm font-medium text-gray-700">作成日 <span className="text-red-500">*</span></label><input type="date" id="creationDate" value={creationDate} onChange={e => setCreationDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
-              <div><label htmlFor="validUntil" className="block text-sm font-medium text-gray-700">有効期限 <span className="text-red-500">*</span></label><input type="date" id="validUntil" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="quotationNo" className="block text-sm font-medium text-gray-700">見積書No. <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="text" id="quotationNo" value={quotationNo} onChange={e => setQuotationNo(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" readOnly required /></div>
+              <div><label htmlFor="creationDate" className="block text-sm font-medium text-gray-700">作成日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="creationDate" value={creationDate} onChange={e => setCreationDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="validUntil" className="block text-sm font-medium text-gray-700">有効期限 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="validUntil" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
             </div>
           </div>
 
@@ -563,7 +712,7 @@ export default function Home() {
           <div className="p-4 border rounded-lg bg-gray-50">
             <h2 className="text-xl font-semibold mb-4">顧客情報</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div><label htmlFor="companyName" className="block text-sm font-medium text-gray-700">企業名 <span className="text-red-500">*</span></label><input type="text" id="companyName" value={companyName} onChange={e => setCompanyName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="companyName" className="block text-sm font-medium text-gray-700">企業名 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="text" id="companyName" value={companyName} onChange={e => setCompanyName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div><label htmlFor="departmentName" className="block text-sm font-medium text-gray-700">部署名</label><input type="text" id="departmentName" value={departmentName} onChange={e => setDepartmentName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
               <div className="md:col-span-2"><label htmlFor="personInCharge" className="block text-sm font-medium text-gray-700">担当者氏名</label><input type="text" id="personInCharge" value={personInCharge} onChange={e => setPersonInCharge(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
             </div>
@@ -573,30 +722,31 @@ export default function Home() {
           <div className="p-4 border rounded-lg bg-gray-50">
             <h2 className="text-xl font-semibold mb-4">スタッフ・契約情報</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="text-red-500">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              <div><label htmlFor="staffName" className="block text-sm font-medium text-gray-700">スタッフ氏名 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="text" id="staffName" value={staffName} onChange={e => setStaffName(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               <div><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">
-                {contractType === '時給' ? 'ご請求単価 (/時)' : contractType.startsWith('月時') ? '月給単価' : '単価'} <span className="text-red-500">*</span>
+                {contractType === '時給' ? 'ご請求単価 (/時)' : contractType.startsWith('月時') ? '月給単価' : '単価'} <span className="ml-1 text-red-500 font-bold text-lg">*</span>
               </label><input type="text" id="billingRate" value={formatNumberWithCommas(billingRate)} onChange={handleBillingRateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
-              <div className="md:col-span-2"><label htmlFor="workContent" className="block text-sm font-medium text-gray-700">業務内容 <span className="text-red-500">*</span></label><textarea id="workContent" value={workContent} onChange={e => setWorkContent(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={3} required /></div>
+              <div className="md:col-span-2"><label htmlFor="workContent" className="block text-sm font-medium text-gray-700">業務内容 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><textarea id="workContent" value={workContent} onChange={e => setWorkContent(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={3} required /></div>
               {/* New Contract Type Selection */}
               <div className="md:col-span-2">
                 <div className="flex items-center">
-                  <label htmlFor="contractType" className="block text-sm font-medium text-gray-700">契約種別 <span className="text-red-500">*</span></label>
+                  <label htmlFor="contractType" className="block text-sm font-medium text-gray-700">契約種別 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                   <div 
                     className="relative ml-2"
                     onMouseEnter={() => setShowInfoTooltip(true)}
                     onMouseLeave={() => setShowInfoTooltip(false)}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
+                    <div className="h-5 w-5 bg-gray-900 text-white rounded-full flex items-center justify-center cursor-pointer">
+                      <span className="text-sm font-bold">?</span>
+                    </div>
                     {showInfoTooltip && contractType && (
-                      <div className="absolute bottom-full mb-2 w-72 bg-gray-800 text-white text-xs rounded py-2 px-3 z-10 whitespace-pre-wrap">
+                      <div className="absolute bottom-full mb-2 w-72 bg-gray-900 text-white text-sm rounded py-2 px-3 z-10 whitespace-pre-wrap shadow-lg">
                         <h4 className="font-bold text-sm mb-1">{contractType}</h4>
                         <p>{contractTypeDescriptions[contractType]}</p>
                       </div>
                     )}
                   </div>
+                  <span className="ml-2 text-xs text-gray-500">契約種別を選択後、アイコンにカーソルを合わせると詳細を確認できます。</span>
                 </div>
                 <select id="contractType" value={contractType} onChange={e => setContractType(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                   <option value="">選択してください</option>
@@ -612,8 +762,8 @@ export default function Home() {
                 </select>
               </div>
               <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="text-red-500">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
-                <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="text-red-500">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+                <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+                <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               </div>
 
               {(contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && (
@@ -621,11 +771,11 @@ export default function Home() {
                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-blue-50">
                     <h3 className="text-lg font-semibold mb-2 md:col-span-2">変動設定</h3>
                     <div>
-                      <label htmlFor="workingDaysPerMonth" className="block text-sm font-medium text-gray-700">労働日数/月 <span className="text-red-500">*</span></label>
+                      <label htmlFor="workingDaysPerMonth" className="block text-sm font-medium text-gray-700">労働日数/月 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                       <input type="number" id="workingDaysPerMonth" value={workingDaysPerMonth} onChange={e => setWorkingDaysPerMonth(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                     </div>
                     <div>
-                      <label htmlFor="workingHoursPerDay" className="block text-sm font-medium text-gray-700">労働時間/日 <span className="text-red-500">*</span></label>
+                      <label htmlFor="workingHoursPerDay" className="block text-sm font-medium text-gray-700">労働時間/日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                       <input type="number" id="workingHoursPerDay" value={workingHoursPerDay} onChange={e => setWorkingHoursPerDay(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                     </div>
                     <div className="md:col-span-2">
@@ -633,13 +783,13 @@ export default function Home() {
                     </div>
                     {(contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動なし、下限変動あり）') && (
                       <div>
-                        <label htmlFor="lowerLimitHourDiff" className="block text-sm font-medium text-gray-700">下限時間 (差分) <span className="text-red-500">*</span></label>
+                        <label htmlFor="lowerLimitHourDiff" className="block text-sm font-medium text-gray-700">下限時間 (差分) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                         <input type="number" id="lowerLimitHourDiff" value={lowerLimitHourDiff} onChange={e => setLowerLimitHourDiff(e.target.value)} placeholder="例: 20" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                       </div>
                     )}
                     {(contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）') && (
                     <div>
-                      <label htmlFor="upperLimitHourDiff" className="block text-sm font-medium text-gray-700">上限時間 (差分) <span className="text-red-500">*</span></label>
+                      <label htmlFor="upperLimitHourDiff" className="block text-sm font-medium text-gray-700">上限時間 (差分) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                       <input type="number" id="upperLimitHourDiff" value={upperLimitHourDiff} onChange={e => setUpperLimitHourDiff(e.target.value)} placeholder="例: 20" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                     </div>
                     )}
@@ -647,7 +797,7 @@ export default function Home() {
                       <p className="text-sm font-medium text-gray-700">計算後の時間幅: <span className="font-bold text-lg">{lowerLimitHours || '---'}h 〜 {upperLimitHours || '---'}h</span></p>
                     </div>
                     <div className="md:col-span-2">
-                      <label htmlFor="variableCalculationType" className="block text-sm font-medium text-gray-700">計算タイプ (特記事項用) <span className="text-red-500">*</span></label>
+                      <label htmlFor="variableCalculationType" className="block text-sm font-medium text-gray-700">計算タイプ (特記事項用) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                       <select id="variableCalculationType" value={variableCalculationType} onChange={e => setVariableCalculationType(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                         <option value="">選択してください</option>
                         {variableCalculationTypeOptions.map((o, i) => <option key={i} value={o}>{o}</option>)}
@@ -661,7 +811,7 @@ export default function Home() {
               {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）') && (
                 <>
                   <div>
-                    <label htmlFor="upperLimitHours" className="block text-sm font-medium text-gray-700">上限時間 (h) <span className="text-red-500">*</span></label>
+                    <label htmlFor="upperLimitHours" className="block text-sm font-medium text-gray-700">上限時間 (h) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                     <input type="number" id="upperLimitHours" value={upperLimitHours} onChange={e => setUpperLimitHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                   </div>
                 </>
@@ -671,7 +821,7 @@ export default function Home() {
               {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）') && (
                 <>
                   <div>
-                    <label htmlFor="lowerLimitHours" className="block text-sm font-medium text-gray-700">下限時間 (h) <span className="text-red-500">*</span></label>
+                    <label htmlFor="lowerLimitHours" className="block text-sm font-medium text-gray-700">下限時間 (h) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                     <input type="number" id="lowerLimitHours" value={lowerLimitHours} onChange={e => setLowerLimitHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                   </div>
                 </>
@@ -681,7 +831,7 @@ export default function Home() {
               {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && (
                 <>
                   <div className="md:col-span-2">
-                    <label htmlFor="overtimeUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">超過単価の算出基準 <span className="text-red-500">*</span></label>
+                    <label htmlFor="overtimeUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">超過単価の算出基準 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                     <select id="overtimeUnitPriceCalculationMethod" value={overtimeUnitPriceCalculationMethod} onChange={e => setOvertimeUnitPriceCalculationMethod(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                       <option value="">選択してください</option>
                       <option value="上限割">上限割</option>
@@ -692,7 +842,7 @@ export default function Home() {
                   </div>
                   {overtimeUnitPriceCalculationMethod === '任意時間割' && (
                     <div className="md:col-span-2">
-                      <label htmlFor="customOvertimeUnitPriceHours" className="block text-sm font-medium text-gray-700">任意時間 (h) <span className="text-red-500">*</span></label>
+                      <label htmlFor="customOvertimeUnitPriceHours" className="block text-sm font-medium text-gray-700">任意時間 (h) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                       <input type="number" id="customOvertimeUnitPriceHours" value={customOvertimeUnitPriceHours} onChange={e => setCustomOvertimeUnitPriceHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                     </div>
                   )}
@@ -707,7 +857,7 @@ export default function Home() {
               {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && (
                 <>
                   <div className="md:col-span-2">
-                    <label htmlFor="deductionUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">控除単価の算出基準 <span className="text-red-500">*</span></label>
+                    <label htmlFor="deductionUnitPriceCalculationMethod" className="block text-sm font-medium text-gray-700">控除単価の算出基準 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                     <select id="deductionUnitPriceCalculationMethod" value={deductionUnitPriceCalculationMethod} onChange={e => setDeductionUnitPriceCalculationMethod(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                       <option value="">選択してください</option>
                       {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限下限変動あり）') && <option value="上限割">上限割</option>}
@@ -718,7 +868,7 @@ export default function Home() {
                   </div>
                   {deductionUnitPriceCalculationMethod === '任意時間割' && (
                     <div className="md:col-span-2">
-                      <label htmlFor="customDeductionUnitPriceHours" className="block text-sm font-medium text-gray-700">任意時間 (h) <span className="text-red-500">*</span></label>
+                      <label htmlFor="customDeductionUnitPriceHours" className="block text-sm font-medium text-gray-700">任意時間 (h) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                       <input type="number" id="customDeductionUnitPriceHours" value={customDeductionUnitPriceHours} onChange={e => setCustomDeductionUnitPriceHours(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
                     </div>
                   )}
@@ -728,7 +878,14 @@ export default function Home() {
           </div>
 
           <div className="p-4 border rounded-lg bg-gray-50">
-            <h2 className="text-xl font-semibold mb-4">割増率設定</h2>
+            <div className="flex items-center mb-4">
+              <h2 className="text-xl font-semibold">割増率設定</h2>
+              {(contractType === '月時（上限なし下限あり）' || contractType === '月時（完全固定）') && (
+                <span className="ml-4 text-sm text-gray-600">
+                  超過単価がないため、割増計算は行われません。
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {contractType === '時給' && (
                 <div><label htmlFor="overtimeRate" className="block text-sm font-medium text-gray-700">普通残業 (x1.25)</label><input type="number" id="overtimeRate" step="0.01" value={overtimeRate} onChange={handlePremiumRateChange(setOvertimeRate)} onBlur={handlePremiumRateBlur(setOvertimeRate)} placeholder="例: 1.25" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" /></div>
@@ -752,12 +909,12 @@ export default function Home() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {contractType !== '月時（完全固定）' && (
                   <>
-                    <div><label htmlFor="roundingUnit" className="block text-sm font-medium text-gray-700">金額丸め単位 <span className="text-red-500">*</span></label><select id="roundingUnit" value={roundingUnit} onChange={e => setRoundingUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingUnitOptions.map(o => <option key={o} value={o}>{o}円</option>)}</select></div>
-                    <div><label htmlFor="roundingMethod" className="block text-sm font-medium text-gray-700">丸め方法 <span className="text-red-500">*</span></label><select id="roundingMethod" value={roundingMethod} onChange={e => setRoundingMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                    <div><label htmlFor="roundingUnit" className="block text-sm font-medium text-gray-700">金額丸め単位 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><select id="roundingUnit" value={roundingUnit} onChange={e => setRoundingUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingUnitOptions.map(o => <option key={o} value={o}>{o}円</option>)}</select></div>
+                    <div><label htmlFor="roundingMethod" className="block text-sm font-medium text-gray-700">丸め方法 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><select id="roundingMethod" value={roundingMethod} onChange={e => setRoundingMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
                   </>
                 )}
-                <div><label htmlFor="settlementUnit" className="block text-sm font-medium text-gray-700">時間精算単位 <span className="text-red-500">*</span></label><select id="settlementUnit" value={settlementUnit} onChange={e => setSettlementUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{settlementUnitOptions.map(o => <option key={o} value={o}>{o}分</option>)}</select></div>
-                <div><label htmlFor="settlementMethod" className="block text-sm font-medium text-gray-700">精算丸め <span className="text-red-500">*</span></label><select id="settlementMethod" value={settlementMethod} onChange={e => setSettlementMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div><label htmlFor="settlementUnit" className="block text-sm font-medium text-gray-700">時間精算単位 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><select id="settlementUnit" value={settlementUnit} onChange={e => setSettlementUnit(e.target.value === '' ? '' : parseInt(e.target.value))} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{settlementUnitOptions.map(o => <option key={o} value={o}>{o}分</option>)}</select></div>
+                <div><label htmlFor="settlementMethod" className="block text-sm font-medium text-gray-700">精算丸め <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><select id="settlementMethod" value={settlementMethod} onChange={e => setSettlementMethod(e.target.value as RoundingMethod)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required><option value="">選択してください</option>{roundingMethods.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
              </div>
           </div>
 

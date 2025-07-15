@@ -290,7 +290,7 @@ export const generateQuotationPdf = async (data: QuotationData) => {
     const formattedContractEndDate = data.contractEndDate.replace(/-/g, '');
     const formattedCreationDate = data.creationDate.replace(/-/g, '');
 
-    const filename = `${sanitizeFilename(data.companyName)}_${sanitizeFilename(data.staffName)}（${formattedContractStartDate}〜${formattedContractEndDate}）_${formattedCreationDate}.pdf`;
+    const filename = `【御見積書】${sanitizeFilename(data.companyName)}御中_${sanitizeFilename(data.staffName)}（${formattedContractStartDate}〜${formattedContractEndDate}）_${formattedCreationDate}.pdf`;
 
     doc.save(filename);
   } catch (error) {
