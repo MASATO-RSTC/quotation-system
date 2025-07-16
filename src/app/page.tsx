@@ -46,6 +46,7 @@ export default function Home() {
   const [variableCalculationType, setVariableCalculationType] = useState("");
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showTotalPrice, setShowTotalPrice] = useState(false);
 
   const contractTypeDescriptions: { [key: string]: string } = {
     "時給": `実際に働いた時間（実働時間）に対して、1時間あたりいくらという金額で請求する契約です。
@@ -528,6 +529,7 @@ export default function Home() {
         contractType: contractType as ContractType,
         upperLimitHoursDiff: typeof upperLimitHourDiff === 'number' ? upperLimitHourDiff : parseFloat(String(upperLimitHourDiff)) || undefined,
         lowerLimitHoursDiff: typeof lowerLimitHourDiff === 'number' ? lowerLimitHourDiff : parseFloat(String(lowerLimitHourDiff)) || undefined,
+        showTotalPrice,
       });
     } finally {
       setIsGeneratingPdf(false);
@@ -761,6 +763,20 @@ export default function Home() {
               <div className="md:col-span-2"><label htmlFor="billingRate" className="block text-sm font-medium text-gray-700">
                 {contractType === '時給' ? 'ご請求単価 (/時)' : contractType.startsWith('月時') ? '月給単価' : '単価'} <span className="ml-1 text-red-500 font-bold text-lg">*</span>
               </label><input type="text" id="billingRate" value={formatNumberWithCommas(billingRate)} onChange={handleBillingRateChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
+              {contractType.startsWith('月時') && (
+                <div className="md:col-span-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="showTotalPrice"
+                    checked={showTotalPrice}
+                    onChange={(e) => setShowTotalPrice(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="showTotalPrice" className="ml-2 block text-sm text-gray-900">
+                    期間合計金額をPDFへ出力する
+                  </label>
+                </div>
+              )}
               <div className="md:col-span-2 grid grid-cols-2 gap-4">
                 <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
                 <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>

@@ -44,6 +44,8 @@ interface QuotationData {
   monthlyCalculationFormula?: string;
   upperLimitHoursDiff?: number;
   lowerLimitHoursDiff?: number;
+  showTotalPrice?: boolean;
+  totalPrice?: number;
 }
 
 // Helper to fetch assets
@@ -142,9 +144,18 @@ export const generateQuotationPdf = async (data: QuotationData) => {
 
     // Add 月時 specific fields
     if (data.contractType.startsWith('月時')) {
+      if (data.showTotalPrice && data.contractStartDate && data.contractEndDate && data.billingRate > 0) {
+        const startDate = new Date(data.contractStartDate);
+        const endDate = new Date(data.contractEndDate);
+        const monthCount = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
+        if (monthCount > 0) {
+          const totalPrice = monthCount * data.billingRate;
+          tableBody.push(['期間合計金額', `${formatCurrency(totalPrice)} (${monthCount}ヶ月分)`]);
+        }
+      }
       tableBody.push(['月給単価', formatCurrency(data.billingRate)]);
       
-      // 時間幅
+      // 時間幅""
       if (data.contractType === '月時（上限あり下限あり）' || data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）') {
         tableBody.push(['時間幅', `${data.lowerLimitHours || 0}h 〜 ${data.upperLimitHours || 0}h`]);
       } else if (data.contractType === '月時（上限あり下限なし）') {
