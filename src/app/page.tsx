@@ -29,6 +29,9 @@ export default function Home() {
   const [contactInfo, setContactInfo] = useState(
     `株式会社リツアンSTC\nエンジニアリング事業部\n担当者名：鈴木 祥\nメール：s.suzuki@ritsuan.com`
   );
+  const [paymentInfo, setPaymentInfo] = useState(
+    `【お支払い先のご案内】\n島田掛川信金 連雀支店 普通1138835\n静岡銀行 掛川支店 普通0830924\n三菱UFJ銀行 浜松支店 普通0358885`
+  );
   const [overtimeRate, setOvertimeRate] = useState<number | string>(1.25);
   const [midnightRate, setMidnightRate] = useState<number | string>(0.25);
   const [legalHolidayRate, setLegalHolidayRate] = useState<number | string>(1.35);
@@ -47,6 +50,147 @@ export default function Home() {
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showTotalPrice, setShowTotalPrice] = useState(false);
+
+  interface MonthlySetting {
+    yearMonth: string; // "2025-07"
+    workingDaysPerMonth: number | string;
+    workingHoursPerDay: number | string;
+    upperLimitHourDiff: number | string;
+    lowerLimitHourDiff: number | string;
+    variableCalculationType: string;
+    baseHours: number;
+    upperLimitHours: number;
+    lowerLimitHours: number;
+    calculatedRates?: {
+      overtimeUnitPrice: number;
+      deductionUnitPrice: number;
+      overtimeUnitPriceWithPremium?: number;
+      monthlyMidnight?: number;
+      monthlyLegalHoliday?: number;
+      monthlyNonLegalHoliday?: number;
+      monthlyOver60Hours?: number;
+    } | null;
+  }
+
+  const [monthlySettings, setMonthlySettings] = useState<MonthlySetting[]>([]);
+
+  useEffect(() => {
+    if (!showTotalPrice || !contractType.includes('変動')) return;
+
+    const newSettings = monthlySettings.map(setting => {
+      const days = parseFloat(String(setting.workingDaysPerMonth)) || 0;
+      const hours = parseFloat(String(setting.workingHoursPerDay)) || 0;
+      const baseHours = days * hours;
+
+      let upperLimitHours = 0;
+      let lowerLimitHours = 0;
+
+      const upperDiff = parseFloat(String(setting.upperLimitHourDiff)) || 0;
+      const lowerDiff = parseFloat(String(setting.lowerLimitHourDiff)) || 0;
+
+      if (contractType === '月時（上限下限変動あり）') {
+        upperLimitHours = baseHours + upperDiff;
+        lowerLimitHours = baseHours - lowerDiff;
+      } else if (contractType === '月時（上限変動あり、下限変動なし）') {
+        upperLimitHours = baseHours + upperDiff;
+        lowerLimitHours = baseHours;
+      } else if (contractType === '月時（上限変動なし、下限変動あり）') {
+        upperLimitHours = baseHours;
+        lowerLimitHours = baseHours - lowerDiff;
+      } else if (contractType === '月時（上限変動なし、下限変動なし）') {
+        upperLimitHours = baseHours;
+        lowerLimitHours = baseHours;
+      }
+      
+      const br = parseFloat(billingRate) || 0;
+      const ru = parseInt(String(roundingUnit)) || 0;
+      const rm = typeof roundingMethod === 'string' && roundingMethod ? roundingMethod as RoundingMethod : "切り捨て";
+      const oprm = parseFloat(String(overtimePremiumRate)) || 0;
+      
+      const calculatedRates = (br > 0 && ru > 0 && rm) ? calculateMonthlyRates(
+        br,
+        upperLimitHours,
+        lowerLimitHours,
+        overtimeUnitPriceCalculationMethod,
+        parseFloat(String(customOvertimeUnitPriceHours)) || 0,
+        deductionUnitPriceCalculationMethod,
+        parseFloat(String(customDeductionUnitPriceHours)) || 0,
+        oprm,
+        ru,
+        rm,
+        parseFloat(String(midnightRate)) || 0,
+        parseFloat(String(legalHolidayRate)) || 0,
+        parseFloat(String(nonLegalHolidayRate)) || 0,
+        parseFloat(String(over60HoursRate)) || 0,
+      ) : null;
+
+      return { ...setting, baseHours, upperLimitHours, lowerLimitHours, calculatedRates };
+    });
+
+    // Avoid infinite loops by checking if a deep comparison is necessary
+    if (JSON.stringify(newSettings) !== JSON.stringify(monthlySettings)) {
+      setMonthlySettings(newSettings);
+    }
+  }, [
+    monthlySettings,
+    contractType,
+    showTotalPrice,
+    billingRate,
+    roundingUnit,
+    roundingMethod,
+    overtimePremiumRate,
+    overtimeUnitPriceCalculationMethod,
+    customOvertimeUnitPriceHours,
+    deductionUnitPriceCalculationMethod,
+    customDeductionUnitPriceHours,
+    midnightRate,
+    legalHolidayRate,
+    nonLegalHolidayRate,
+    over60HoursRate
+  ]);
+
+  const handleMonthlySettingChange = (index: number, field: keyof MonthlySetting, value: string | number) => {
+    const newSettings = [...monthlySettings];
+    newSettings[index] = { ...newSettings[index], [field]: value };
+    setMonthlySettings(newSettings);
+  };
+
+  useEffect(() => {
+    const isVariableMonthly = contractType.includes('変動');
+    if (!showTotalPrice || !isVariableMonthly || !contractStartDate || !contractEndDate) {
+      setMonthlySettings([]);
+      return;
+    }
+
+    const start = new Date(contractStartDate);
+    const end = new Date(contractEndDate);
+    const newSettings: MonthlySetting[] = [];
+
+    let current = new Date(start.getFullYear(), start.getMonth(), 1);
+
+    while (current <= end) {
+      const yearMonth = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+      // Find existing setting or create a new one
+      const existing = monthlySettings.find(s => s.yearMonth === yearMonth);
+      newSettings.push(
+        existing || {
+          yearMonth,
+          workingDaysPerMonth: "",
+          workingHoursPerDay: "",
+          upperLimitHourDiff: "",
+          lowerLimitHourDiff: "",
+          variableCalculationType: "",
+          baseHours: 0,
+          upperLimitHours: 0,
+          lowerLimitHours: 0,
+          calculatedRates: null,
+        }
+      );
+      current.setMonth(current.getMonth() + 1);
+    }
+    setMonthlySettings(newSettings);
+
+  }, [contractStartDate, contractEndDate, showTotalPrice, contractType]);
 
   const contractTypeDescriptions: { [key: string]: string } = {
     "時給": `実際に働いた時間（実働時間）に対して、1時間あたりいくらという金額で請求する契約です。
@@ -413,82 +557,57 @@ export default function Home() {
     const variableTypes = ['月時（上限下限変動あり）', '月時（上限変動あり、下限変動なし）', '月時（上限変動なし、下限変動あり）', '月時（上限変動なし、下限変動なし）'];
 
     if (monthlyTypesWithOptions.includes(contractType) && monthlyCalculatedRates && (monthlyCalculatedRates.overtimeUnitPrice > 0 || monthlyCalculatedRates.deductionUnitPrice > 0)) {
-      let formulaText = '▼ 単価計算方法';
-      if (variableTypes.includes(contractType) && variableCalculationType) {
-        const days = String(workingDaysPerMonth) || '0';
-        const hours = String(workingHoursPerDay) || '0';
-        const parts = variableCalculationType.split(' × ');
-        if (parts.length === 2) {
-          const formattedCalcType = `${parts[0]}:${days}日 × ${parts[1]}:${hours}h`;
-          formulaText += `（${formattedCalcType}）`;
-        } else {
-          formulaText += `（${variableCalculationType}）`; // Fallback
-        }
-      }
-      formulaText += '\n';
+      let formulaText = '▼ 単価計算方法\n';
+      const br = billingRate.toLocaleString();
+      const isVariable = variableTypes.includes(contractType);
+      const formulaLines: string[] = [];
 
-      const br = billingRate.toLocaleString(); // Formatted billing rate
-
-      // 超過計算式
-      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && overtimeUnitPriceCalculationMethod) {
-        let overtimeFormula = `超過：${br}円 ÷ `;
-        let divisorValue = 0;
+      // Overtime formula
+      if (monthlyCalculatedRates.overtimeUnitPrice > 0) {
         let divisorLabel = '';
-
         switch (overtimeUnitPriceCalculationMethod) {
-          case '上限割':
-            divisorValue = parseFloat(String(upperLimitHours)) || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
-          case '下限割':
-            divisorValue = parseFloat(String(lowerLimitHours)) || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
-          case '中央割':
-            divisorValue = (parseFloat(String(upperLimitHours)) + parseFloat(String(lowerLimitHours))) / 2 || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
-          case '任意時間割':
-            divisorValue = parseFloat(String(customOvertimeUnitPriceHours)) || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
+          case '上限割': divisorLabel = `${upperLimitHours}h`; break;
+          case '下限割': divisorLabel = `${lowerLimitHours}h`; break;
+          case '中央割': divisorLabel = `${(parseFloat(String(upperLimitHours)) + parseFloat(String(lowerLimitHours))) / 2}h`; break;
+          case '任意時間割': divisorLabel = `${customOvertimeUnitPriceHours}h`; break;
         }
-        overtimeFormula += `${divisorLabel}`;
+        let overtimeFormula = `超過：${br}円 ÷ ${divisorLabel}`;
+        if (isVariable) {
+          const days = String(workingDaysPerMonth) || '0';
+          const hours = String(workingHoursPerDay) || '0';
+          const upperDiff = parseFloat(String(upperLimitHourDiff)) || 0;
+          overtimeFormula += ` （${variableCalculationType}:${days}日 × ${hours}h`;
+          if (upperDiff > 0) overtimeFormula += ` + ${upperDiff}h`;
+          overtimeFormula += '）';
+        }
         if (overtimePremiumRate && parseFloat(String(overtimePremiumRate)) > 0) {
           overtimeFormula += ` × ${overtimePremiumRate}`;
         }
-        formulaText += overtimeFormula + "\n";
+        formulaLines.push(overtimeFormula);
       }
 
-      // 控除計算式
-      if ((contractType === '月時（上限あり下限あり）' || contractType === '月時（上限なし下限あり）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && deductionUnitPriceCalculationMethod) {
-        let deductionFormula = `控除：${br}円 ÷ `;
-        let divisorValue = 0;
+      // Deduction formula
+      if (monthlyCalculatedRates.deductionUnitPrice > 0) {
         let divisorLabel = '';
-
         switch (deductionUnitPriceCalculationMethod) {
-          case '上限割':
-            divisorValue = parseFloat(String(upperLimitHours)) || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
-          case '下限割':
-            divisorValue = parseFloat(String(lowerLimitHours)) || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
-          case '中央割':
-            divisorValue = (parseFloat(String(upperLimitHours)) + parseFloat(String(lowerLimitHours))) / 2 || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
-          case '任意時間割':
-            divisorValue = parseFloat(String(customDeductionUnitPriceHours)) || 0;
-            divisorLabel = `${divisorValue}h`;
-            break;
+          case '上限割': divisorLabel = `${upperLimitHours}h`; break;
+          case '下限割': divisorLabel = `${lowerLimitHours}h`; break;
+          case '中央割': divisorLabel = `${(parseFloat(String(upperLimitHours)) + parseFloat(String(lowerLimitHours))) / 2}h`; break;
+          case '任意時間割': divisorLabel = `${customDeductionUnitPriceHours}h`; break;
         }
-        deductionFormula += `${divisorLabel}`;
-        formulaText += deductionFormula + "\n";
+        let deductionFormula = `控除：${br}円 ÷ ${divisorLabel}`;
+        if (isVariable) {
+          const days = String(workingDaysPerMonth) || '0';
+          const hours = String(workingHoursPerDay) || '0';
+          const lowerDiff = parseFloat(String(lowerLimitHourDiff)) || 0;
+          deductionFormula += ` （${variableCalculationType}:${days}日 × ${hours}h`;
+          if (lowerDiff > 0) deductionFormula += ` - ${lowerDiff}h`;
+          deductionFormula += '）';
+        }
+        formulaLines.push(deductionFormula);
       }
 
-      return formulaText.trim();
+      return `${formulaText}${formulaLines.join('\n')}`.trim();
     }
     return '';
   }, [
@@ -505,6 +624,8 @@ export default function Home() {
     variableCalculationType, // Add dependency
     workingDaysPerMonth, // Add dependency
     workingHoursPerDay, // Add dependency
+    upperLimitHourDiff, // Add dependency
+    lowerLimitHourDiff, // Add dependency
   ]);
 
   const handleGeneratePdf = async (event: React.FormEvent) => {
@@ -530,6 +651,14 @@ export default function Home() {
         upperLimitHoursDiff: typeof upperLimitHourDiff === 'number' ? upperLimitHourDiff : parseFloat(String(upperLimitHourDiff)) || undefined,
         lowerLimitHoursDiff: typeof lowerLimitHourDiff === 'number' ? lowerLimitHourDiff : parseFloat(String(lowerLimitHourDiff)) || undefined,
         showTotalPrice,
+        monthlySettings,
+        overtimeRate,
+        midnightRate,
+        legalHolidayRate,
+        nonLegalHolidayRate,
+        over60HoursRate,
+        overtimePremiumRate,
+        paymentInfo,
       });
     } finally {
       setIsGeneratingPdf(false);
@@ -647,7 +776,7 @@ export default function Home() {
                           <tr className="bg-gray-50"><td className="border p-2">作成日</td><td className="border p-2">作成日 (<strong className="text-red-600">必須</strong>)</td></tr>
                           <tr className="bg-white"><td className="border p-2">会社名</td><td className="border p-2">企業名 (<strong className="text-red-600">必須</strong>)</td></tr>
                           <tr className="bg-gray-50"><td className="border p-2">部署名, 担当者氏名</td><td className="border p-2">部署名 (任意), 担当者氏名 (任意)</td></tr>
-                          <tr className="bg-white"><td className="border p-2">発行元情報</td><td className="border p-2">発行元 (任意)</td></tr>
+                          <tr className="bg-white"><td className="border p-2">発行元情報, お支払い先</td><td className="border p-2">発行元・振込先 (任意)</td></tr>
                         </tbody>
                       </table>
                     </div>
@@ -777,12 +906,53 @@ export default function Home() {
                   </label>
                 </div>
               )}
+
               <div className="md:col-span-2 grid grid-cols-2 gap-4">
                 <div><label htmlFor="contractStartDate" className="block text-sm font-medium text-gray-700">契約開始日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractStartDate" value={contractStartDate} onChange={e => setContractStartDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
                 <div><label htmlFor="contractEndDate" className="block text-sm font-medium text-gray-700">契約終了日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label><input type="date" id="contractEndDate" value={contractEndDate} onChange={e => setContractEndDate(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required /></div>
               </div>
 
-              {(contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') && (
+              {/* Monthly Variable Settings UI */}
+              {showTotalPrice && contractType.includes('変動') && monthlySettings.map((setting, index) => (
+                <div key={setting.yearMonth} className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-blue-50">
+                  <h3 className="text-lg font-semibold mb-2 md:col-span-2">変動設定 ({setting.yearMonth})</h3>
+                  <div>
+                    <label htmlFor={`workingDaysPerMonth-${index}`} className="block text-sm font-medium text-gray-700">労働日数/月 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
+                    <input type="number" id={`workingDaysPerMonth-${index}`} value={setting.workingDaysPerMonth} onChange={e => handleMonthlySettingChange(index, 'workingDaysPerMonth', e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
+                  </div>
+                  <div>
+                    <label htmlFor={`workingHoursPerDay-${index}`} className="block text-sm font-medium text-gray-700">労働時間/日 <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
+                    <input type="number" id={`workingHoursPerDay-${index}`} value={setting.workingHoursPerDay} onChange={e => handleMonthlySettingChange(index, 'workingHoursPerDay', e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium text-gray-700">基準時間: <span className="font-bold text-lg">{setting.baseHours > 0 ? `${setting.baseHours}h` : '---'}</span></p>
+                  </div>
+                  {(contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動なし、下限変動あり）') && (
+                    <div>
+                      <label htmlFor={`lowerLimitHourDiff-${index}`} className="block text-sm font-medium text-gray-700">下限時間 (差分) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
+                      <input type="number" id={`lowerLimitHourDiff-${index}`} value={setting.lowerLimitHourDiff} onChange={e => handleMonthlySettingChange(index, 'lowerLimitHourDiff', e.target.value)} placeholder="例: 20" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
+                    </div>
+                  )}
+                  {(contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）') && (
+                  <div>
+                    <label htmlFor={`upperLimitHourDiff-${index}`} className="block text-sm font-medium text-gray-700">上限時間 (差分) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
+                    <input type="number" id={`upperLimitHourDiff-${index}`} value={setting.upperLimitHourDiff} onChange={e => handleMonthlySettingChange(index, 'upperLimitHourDiff', e.target.value)} placeholder="例: 20" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required />
+                  </div>
+                  )}
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium text-gray-700">計算後の時間幅: <span className="font-bold text-lg">{setting.lowerLimitHours || '---'}h 〜 {setting.upperLimitHours || '---'}h</span></p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label htmlFor={`variableCalculationType-${index}`} className="block text-sm font-medium text-gray-700">計算タイプ (特記事項用) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
+                    <select id={`variableCalculationType-${index}`} value={setting.variableCalculationType} onChange={e => handleMonthlySettingChange(index, 'variableCalculationType', e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                      <option value="">選択してください</option>
+                      {variableCalculationTypeOptions.map((o, i) => <option key={i} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                </div>
+              ))}
+
+              {(contractType.includes('変動')) && !showTotalPrice && (
                 <>
                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-blue-50">
                     <h3 className="text-lg font-semibold mb-2 md:col-span-2">変動設定</h3>
@@ -948,7 +1118,7 @@ export default function Home() {
                     <div><p className="font-medium text-gray-600">60時間超過単価:</p><p className="font-semibold text-lg">{hourlyCalculatedRates.over60Hours > 0 ? `${hourlyCalculatedRates.over60Hours.toLocaleString()}円` : '-'}</p></div>
                   </>
                 )}
-                {contractType.startsWith('月時') && monthlyCalculatedRates && (
+                {contractType.startsWith('月時') && monthlyCalculatedRates && !(showTotalPrice && contractType.includes('変動')) && (
                   <>
                     {(contractType === '月時（上限あり下限あり）' || contractType === '月時（上限あり下限なし）' || contractType === '月時（上限下限変動あり）' || contractType === '月時（上限変動あり、下限変動なし）' || contractType === '月時（上限変動なし、下限変動あり）' || contractType === '月時（上限変動なし、下限変動なし）') &&
                       <div><p className="font-medium text-gray-600">超過単価:</p><p className="font-semibold text-lg">{monthlyCalculatedRates.overtimeUnitPriceWithPremium ? `${monthlyCalculatedRates.overtimeUnitPriceWithPremium.toLocaleString()}円 (${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円)` : monthlyCalculatedRates.overtimeUnitPrice > 0 ? `${monthlyCalculatedRates.overtimeUnitPrice.toLocaleString()}円` : '-'}</p></div>
@@ -970,6 +1140,29 @@ export default function Home() {
                     )}
                   </>
                 )}
+                {contractType.startsWith('月時') && showTotalPrice && contractType.includes('変動') && monthlySettings.map((setting, index) => (
+                  <div key={index} className="col-span-2 md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <p className="font-semibold text-gray-700 col-span-full">▼ {setting.yearMonth}の計算結果</p>
+                    {setting.calculatedRates?.overtimeUnitPrice && setting.calculatedRates.overtimeUnitPrice > 0 && 
+                      <div><p className="font-medium text-gray-600">超過単価:</p><p className="font-semibold text-lg">{setting.calculatedRates.overtimeUnitPriceWithPremium ? `${setting.calculatedRates.overtimeUnitPriceWithPremium.toLocaleString()}円 (${setting.calculatedRates.overtimeUnitPrice.toLocaleString()}円)` : setting.calculatedRates.overtimeUnitPrice > 0 ? `${setting.calculatedRates.overtimeUnitPrice.toLocaleString()}円` : '-'}</p></div>
+                    }
+                    {setting.calculatedRates?.deductionUnitPrice && setting.calculatedRates.deductionUnitPrice > 0 && 
+                      <div><p className="font-medium text-gray-600">控除単価:</p><p className="font-semibold text-lg">{setting.calculatedRates.deductionUnitPrice > 0 ? `${setting.calculatedRates.deductionUnitPrice.toLocaleString()}円` : '-'}</p></div>
+                    }
+                    {setting.calculatedRates?.monthlyMidnight && setting.calculatedRates.monthlyMidnight > 0 &&
+                      <div><p className="font-medium text-gray-600">深夜手当単価:</p><p className="font-semibold text-lg">{`${setting.calculatedRates.monthlyMidnight.toLocaleString()}円`}</p></div>
+                    }
+                    {setting.calculatedRates?.monthlyLegalHoliday && setting.calculatedRates.monthlyLegalHoliday > 0 &&
+                      <div><p className="font-medium text-gray-600">法定休日出勤単価:</p><p className="font-semibold text-lg">{`${setting.calculatedRates.monthlyLegalHoliday.toLocaleString()}円`}</p></div>
+                    }
+                    {setting.calculatedRates?.monthlyNonLegalHoliday && setting.calculatedRates.monthlyNonLegalHoliday > 0 &&
+                      <div><p className="font-medium text-gray-600">法定外休日出勤単価:</p><p className="font-semibold text-lg">{`${setting.calculatedRates.monthlyNonLegalHoliday.toLocaleString()}円`}</p></div>
+                    }
+                    {setting.calculatedRates?.monthlyOver60Hours && setting.calculatedRates.monthlyOver60Hours > 0 &&
+                      <div><p className="font-medium text-gray-600">60時間超過単価:</p><p className="font-semibold text-lg">{`${setting.calculatedRates.monthlyOver60Hours.toLocaleString()}円`}</p></div>
+                    }
+                  </div>
+                ))}
               </div>
             </div>
           ) : null }
@@ -982,8 +1175,11 @@ export default function Home() {
 
           {/* Issuer Info Section */}
           <div className="p-4 border rounded-lg bg-gray-50">
-            <h2 className="text-xl font-semibold mb-4">発行元</h2>
-            <textarea value={contactInfo} onChange={e => setContactInfo(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={4} />
+            <h2 className="text-xl font-semibold mb-4">発行元・振込先</h2>
+            <label htmlFor="contactInfo" className="block text-sm font-medium text-gray-700">発行元情報</label>
+            <textarea id="contactInfo" value={contactInfo} onChange={e => setContactInfo(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" rows={4} />
+            <label htmlFor="paymentInfo" className="block text-sm font-medium text-gray-700 mt-4">お支払い先のご案内</label>
+            <textarea id="paymentInfo" value={paymentInfo} onChange={e => setPaymentInfo(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 text-sm text-gray-600 leading-relaxed" rows={5} />
           </div>
 
           {/* Generate Button */}
