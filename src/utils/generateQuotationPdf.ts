@@ -329,13 +329,22 @@ export const generateQuotationPdf = async (data: QuotationData) => {
             case '中央割': divisorLabel = `${(setting.upperLimitHours + setting.lowerLimitHours) / 2}h`; break;
             // case '任意時間割': ...
           }
-          let overtimeFormula = `\n超過：${br}円 ÷ ${divisorLabel}`;
+          let overtimeFormula = `
+超過：${br}円 ÷ ${divisorLabel}`;
           const days = setting.workingDaysPerMonth;
           const hours = setting.workingHoursPerDay;
           const upperDiff = setting.upperLimitHourDiff;
-          overtimeFormula += ` （${setting.variableCalculationType}:${days}日 × ${hours}h`;
-          if (typeof upperDiff === 'number' && upperDiff > 0) overtimeFormula += ` + ${upperDiff}h`;
-          overtimeFormula += '）';
+          if (
+            data.contractType === '月時（上限下限変動あり）' ||
+            data.contractType === '月時（上限変動あり、下限変動なし）' ||
+            data.contractType === '月時（上限変動なし、下限変動あり）'
+          ) {
+            overtimeFormula += ` （${setting.variableCalculationType}:${days}日 × ${hours}h`;
+            if (upperDiff && Number(upperDiff) > 0) {
+              overtimeFormula += ` + ${upperDiff}h`;
+            }
+            overtimeFormula += '）';
+          }
           if (data.overtimePremiumRate && Number(data.overtimePremiumRate) > 0) {
             overtimeFormula += ` × ${data.overtimePremiumRate}`;
           }
@@ -350,13 +359,22 @@ export const generateQuotationPdf = async (data: QuotationData) => {
             case '中央割': divisorLabel = `${(setting.upperLimitHours + setting.lowerLimitHours) / 2}h`; break;
             // case '任意時間割': ...
           }
-          let deductionFormula = `\n控除：${br}円 ÷ ${divisorLabel}`;
+          let deductionFormula = `
+控除：${br}円 ÷ ${divisorLabel}`;
           const days = setting.workingDaysPerMonth;
           const hours = setting.workingHoursPerDay;
           const lowerDiff = setting.lowerLimitHourDiff;
-          deductionFormula += ` （${setting.variableCalculationType}:${days}日 × ${hours}h`;
-          if (typeof lowerDiff === 'number' && lowerDiff > 0) deductionFormula += ` - ${lowerDiff}h`;
-          deductionFormula += '）';
+          if (
+            data.contractType === '月時（上限下限変動あり）' ||
+            data.contractType === '月時（上限変動あり、下限変動なし）' ||
+            data.contractType === '月時（上限変動なし、下限変動あり）'
+          ) {
+            deductionFormula += ` （${setting.variableCalculationType}:${days}日 × ${hours}h`;
+            if (lowerDiff && Number(lowerDiff) > 0) {
+              deductionFormula += ` - ${lowerDiff}h`;
+            }
+            deductionFormula += '）';
+          }
           formulaText += deductionFormula;
         }
         combinedNotes += formulaText;
