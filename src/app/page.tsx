@@ -50,6 +50,7 @@ export default function Home() {
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showTotalPrice, setShowTotalPrice] = useState(false);
+  const [showTotalHours, setShowTotalHours] = useState(false);
 
   interface MonthlySetting {
     yearMonth: string; // "2025-07"
@@ -982,6 +983,25 @@ export default function Home() {
                     <div className="md:col-span-2">
                       <p className="text-sm font-medium text-gray-700">計算後の時間幅: <span className="font-bold text-lg">{lowerLimitHours || '---'}h 〜 {upperLimitHours || '---'}h</span></p>
                     </div>
+                    <div className="md:col-span-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="showTotalHours"
+                          checked={showTotalHours}
+                          onChange={e => setShowTotalHours(e.target.checked)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor="showTotalHours" className="text-sm font-medium text-gray-700">
+                          合計時間を表示する
+                        </label>
+                      </div>
+                    </div>
+                    {showTotalHours && (
+                      <div className="md:col-span-2">
+                        <p className="text-sm font-medium text-gray-700">精算幅: <span className="font-bold text-lg">{settlementUnit}分{settlementMethod}</span></p>
+                      </div>
+                    )}
                     <div className="md:col-span-2">
                       <label htmlFor="variableCalculationType" className="block text-sm font-medium text-gray-700">計算タイプ (特記事項用) <span className="ml-1 text-red-500 font-bold text-lg">*</span></label>
                       <select id="variableCalculationType" value={variableCalculationType} onChange={e => setVariableCalculationType(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>

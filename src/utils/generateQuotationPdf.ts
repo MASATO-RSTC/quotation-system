@@ -216,6 +216,13 @@ export const generateQuotationPdf = async (data: QuotationData) => {
             const deductionValue = setting.calculatedRates?.deductionUnitPrice && setting.calculatedRates.deductionUnitPrice > 0 ? `控除: ${formatCurrency(setting.calculatedRates.deductionUnitPrice)}` : '控除: -';
             tableBody.push([`超過・控除 (${setting.yearMonth})`, `${overtimeValue} / ${deductionValue}`]);
 
+            // Add settlement/base range to the table
+            if (data.contractType === '月時（上限下限変動あり）' || data.contractType === '月時（上限変動あり、下限変動なし）' || data.contractType === '月時（上限変動なし、下限変動あり）') {
+              tableBody.push([`精算時間 (${setting.yearMonth})`, `${setting.lowerLimitHours}h 〜 ${setting.upperLimitHours}h`]);
+            } else if (data.contractType === '月時（上限変動なし、下限変動なし）') {
+              tableBody.push([`基準時間 (${setting.yearMonth})`, `${setting.baseHours}h`]);
+            }
+
             const premiumRatesTexts: string[] = [];
             if (data.midnightRate && setting.calculatedRates?.monthlyMidnight && setting.calculatedRates.monthlyMidnight > 0) premiumRatesTexts.push(`深夜(${data.midnightRate}): ${formatCurrency(setting.calculatedRates.monthlyMidnight)}`);
             if (data.legalHolidayRate && setting.calculatedRates?.monthlyLegalHoliday && setting.calculatedRates.monthlyLegalHoliday > 0) premiumRatesTexts.push(`法定休日(${data.legalHolidayRate}): ${formatCurrency(setting.calculatedRates.monthlyLegalHoliday)}`);
